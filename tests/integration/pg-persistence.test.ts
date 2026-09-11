@@ -10,6 +10,7 @@ import type {
   AthleteSportParticipation,
 } from "@domain/athlete/athlete.types";
 import type { Id, ISODateString } from "@shared/kernel";
+import { deactivatePerson } from "@domain/identity/person";
 
 /**
  * PostgreSQL integration tests.
@@ -37,6 +38,8 @@ function key(suffix: string): string {
 function person(idSuffix: string, sportsSuffix: string): Person {
   return {
     id: key(idSuffix) as Id<"Person">,
+    version: 1 as never,
+    updatedAt: NOW,
     displayName: "Integration Tester",
     dateOfBirth: "2000-01-01",
     lifecycleStatus: "active",
@@ -51,6 +54,7 @@ function person(idSuffix: string, sportsSuffix: string): Person {
 function profile(idSuffix: string, personIdSuffix: string): AthleteProfile {
   return {
     id: key(idSuffix) as Id<"AthleteProfile">,
+    version: 1 as never,
     personId: key(personIdSuffix) as Id<"Person">,
     status: "active",
     createdAt: NOW,
@@ -104,11 +108,17 @@ describe.skipIf(!RUN_INTEGRATION)("PostgreSQL persistence integration", () => {
     expect(created.ok).toBe(true);
 
     const bySports = await persons.findBySportsId(key("s1") as Id<"SportsId">);
-    expect(bySports?.id).toBe(key("p1"));
-    expect(bySports?.sportsId?.value).toBe(key("s1"));
+    expect(bySports.kind).toBe("found");
+    if (bySports.kind !== "found") throw new Error("expected Person");
+    expect(bySports.person.id).toBe(key("p1"));
+    expect(bySports.person.sportsId?.value).toBe(key("s1"));
+    expect(bySports.person.version).toBe(1);
 
     const byId = await persons.findById(key("p1") as Id<"Person">);
-    expect(byId?.sportsId?.value).toBe(key("s1"));
+    expect(byId.kind).toBe("found");
+    if (byId.kind !== "found") throw new Error("expected Person");
+    expect(byId.person.sportsId?.value).toBe(key("s1"));
+    expect(byId.person.version).toBe(1);
   });
 
   it("rejects a duplicate Person ID", async () => {
@@ -123,6 +133,46 @@ describe.skipIf(!RUN_INTEGRATION)("PostgreSQL persistence integration", () => {
     expect(result.ok).toBe(false);
     if (result.ok) throw new Error("expected failure");
     expect(result.error.kind).toBe("duplicate_sports_id");
+    const rolledBack = await persons.findById(key("p2") as Id<"Person">);
+    expect(rolledBack.kind).toBe("not_found");
+  });
+
+  it("deactivates N to the domain-provided N+1 and rejects stale overwrite", async () => {
+    const first = await persons.findById(key("p1") as Id<"Person">);
+    const stale = await persons.findById(key("p1") as Id<"Person">);
+    if (first.kind !== "found" || stale.kind !== "found") throw new Error("expected Person");
+    const changed = deactivatePerson(first.person, { now: NOW, eventId: key("event") });
+    if (!changed.ok) throw new Error(changed.error.message);
+    expect(changed.value.person.version).toBe(2);
+    const saved = await persons.save(changed.value.person, first.person.version);
+    expect(saved.ok).toBe(true);
+    const stored = await sql<{ version: number; lifecycle_status: string }[]>`
+      SELECT version, lifecycle_status FROM persons WHERE id = ${key("p1")}`;
+    expect(stored[0]).toMatchObject({ version: 2, lifecycle_status: "deactivated" });
+
+    const staleChanged = deactivatePerson(stale.person, { now: NOW, eventId: key("stale-event") });
+    if (!staleChanged.ok) throw new Error(staleChanged.error.message);
+    const rejected = await persons.save(staleChanged.value.person, stale.person.version);
+    expect(rejected).toEqual({ ok: false, error: { kind: "concurrency_conflict" } });
+    const after = await sql<{ version: number; lifecycle_status: string }[]>`
+      SELECT version, lifecycle_status FROM persons WHERE id = ${key("p1")}`;
+    expect(after[0]).toMatchObject({ version: 2, lifecycle_status: "deactivated" });
+  });
+
+  it("rejects a non-consecutive domain-provided version without writing", async () => {
+    const loaded = await persons.findById(key("p1") as Id<"Person">);
+    if (loaded.kind !== "found") throw new Error("expected Person");
+    const result = await persons.save({ ...loaded.person, version: 9 as never }, loaded.person.version);
+    expect(result.ok).toBe(false);
+    if (result.ok) throw new Error("expected failure");
+    expect(result.error.kind).toBe("invalid_persistence_state");
+  });
+
+  it("maps a malformed stored Person record to invalid_persistence_state", async () => {
+    await sql`INSERT INTO persons (id, display_name, lifecycle_status, version, updated_at)
+      VALUES (${key("malformed")}, 'Malformed', 'active', 1, ${NOW})`;
+    const result = await persons.findById(key("malformed") as Id<"Person">);
+    expect(result.kind).toBe("invalid_persistence_state");
   });
 
   it("enforces one athlete profile per person", async () => {

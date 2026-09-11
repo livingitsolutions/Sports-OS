@@ -36,13 +36,14 @@ Applied migrations (append-only, numbered, immutable):
 |---|---|
 | `0001_sprint4_core_persistence` | `persons`, `sports_ids`, `athlete_profiles`, `athlete_sport_participations`, `sports`; constraints, the partial active-participation index, version columns; RLS enabled on all five tables. |
 | `0002_sprint4_sport_reference_seed` | Minimal, non-exhaustive Sport reference rows. |
+| `0003_sprint4_1_persons_updated_at` | Adds and backfills the non-null Person update timestamp used by mutation persistence. |
 
 ### Rules (see ADR-022)
 
 1. Migrations are numbered and immutable once applied. A new change is always a
    new, higher-numbered migration — history is append-only.
-2. Migrations are deterministic and idempotent (`IF NOT EXISTS` / `IF EXISTS`,
-   drop-then-create for policies) and each opens with a markdown summary.
+2. Migrations are deterministic. Idempotence is used only where it cannot hide
+   schema drift; expected structural changes fail loudly when prior state is wrong.
 3. Destructive changes (`DROP`, column-type change, rename) require explicit
    review; the default posture is additive.
 4. Prefer forward-fixes: repair a mistake with a new additive migration rather
@@ -73,8 +74,8 @@ existence through `SportDirectory`, not against fixed IDs.
 ## Integration tests
 
 PostgreSQL integration tests live in `tests/integration/` and exercise the real
-constraints (atomic Person + Sports ID, one profile per Person, one active
-participation with re-entry, sport existence). They are guarded on
+constraints and version behavior (including deactivation, stale writers, and
+malformed records). They are guarded on
 `TEST_DATABASE_URL` and **skip cleanly when it is unset** — they are never
 pointed at the production database automatically and never fake a pass. Point
 `TEST_DATABASE_URL` at a disposable database with the Sprint 4 migrations applied
@@ -87,5 +88,6 @@ Unit tests (in-memory, deterministic) are separate and always run via
 
 Schema can be validated directly against the live database: confirm the partial
 index predicate (`WHERE status = 'active'`), the uniqueness constraints, the
-version columns and their `CHECK (version >= 1)`, and that RLS is enabled with no
-policies. These checks were run for Sprint 4 and matched the intended schema.
+version columns and their `CHECK (version >= 1)`, `persons.updated_at`, and that
+RLS is enabled with no policies. A run must report skipped integration tests
+separately from passing tests.

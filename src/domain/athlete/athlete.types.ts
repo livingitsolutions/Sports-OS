@@ -1,4 +1,5 @@
 import type { Id, ISODateString } from "@shared/kernel";
+import type { AggregateVersion } from "@domain/aggregate";
 
 /**
  * Athlete context types.
@@ -31,6 +32,7 @@ export type AthleteProfileStatus = "active" | "inactive";
  */
 export interface AthleteProfile {
   readonly id: Id<"AthleteProfile">;
+  readonly version: AggregateVersion;
   readonly personId: Id<"Person">;
   readonly status: AthleteProfileStatus;
   readonly createdAt: ISODateString;

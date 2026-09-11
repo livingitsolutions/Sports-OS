@@ -49,6 +49,7 @@ function seedProfile(
 ) {
   const profile: AthleteProfile = {
     id: id as Id<"AthleteProfile">,
+    version: 1 as never,
     personId: personId as Id<"Person">,
     status: "active",
     createdAt: NOW,

@@ -14,6 +14,11 @@
 > layer and dependency rules below are unchanged: the database driver is an
 > adapter detail behind the existing repository contracts.
 
+> **[S4.2] Aggregate owns version advancement; persistence owns concurrency
+> verification.** A mutation changes N to N+1 in the domain, then persistence
+> stores that supplied N+1 only if the stored version is still N. Repositories
+> neither invent versions nor manufacture domain events.
+
 ## R1. One Person may hold many platform roles.
 
 A `Person` is the natural/legal identity. Roles are derived from scoped

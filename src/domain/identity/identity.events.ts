@@ -1,4 +1,5 @@
 import type { DomainEvent } from "@domain/aggregate";
+import type { AggregateVersion } from "@domain/aggregate";
 import type { Id } from "@shared/kernel";
 
 /**
@@ -26,4 +27,12 @@ export interface SportsIdIssued extends DomainEvent {
   readonly sportsId: Id<"SportsId">;
 }
 
-export type IdentityDomainEvent = PersonCreated | SportsIdIssued;
+/** The completed active -> deactivated Person transition. */
+export interface PersonDeactivated extends DomainEvent {
+  readonly type: "identity.person_deactivated";
+  readonly aggregateType: "Person";
+  readonly personId: Id<"Person">;
+  readonly aggregateVersion: AggregateVersion;
+}
+
+export type IdentityDomainEvent = PersonCreated | SportsIdIssued | PersonDeactivated;

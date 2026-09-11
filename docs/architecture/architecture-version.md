@@ -4,12 +4,27 @@
 
 ## Current version
 
-**SportsOS Architecture v0.6.0 — Sprint 4 (First Production PostgreSQL Persistence)**
+**SportsOS Architecture v0.6.2 — Sprint 4.2 (Version Ownership Hardening)**
 
-- Date: 2026-09-08
-- Sprint: 4 (durable Person / Sports ID / AthleteProfile / participation storage)
+- Date: 2026-09-11
+- Sprint: 4.2 (aggregate version ownership and persistence hardening)
 - Status: Active
-- Supersedes: v0.5.0 (Sprint 3)
+- Supersedes: v0.6.1 (Sprint 4.1)
+
+## What changed in v0.6.2 (Sprint 4.2)
+
+This corrective release makes aggregate version ownership executable. Domain
+creation starts at version 1; Person deactivation advances N to N+1 and produces
+its event in domain behavior. Repositories persist that supplied N+1 only
+against expected N. Person reads now return typed found/not-found/unavailable/
+invalid-state outcomes, and malformed rows cannot be rehydrated. PostgreSQL and
+in-memory adapters share stale-write semantics. Events remain persistence-then-
+publication without an outbox or atomic delivery claim. AthleteProfile now
+carries and rehydrates its existing version consistently; no mutation was added.
+
+The received checkout did not contain the stated v0.6.1 implementation or its
+`0003` migration, so this sprint supplies the narrow `persons.updated_at`
+migration required by the deactivation write and records the baseline mismatch.
 
 ## What changed in v0.6.0 (Sprint 4)
 

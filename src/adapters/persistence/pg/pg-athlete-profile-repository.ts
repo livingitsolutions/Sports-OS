@@ -46,11 +46,12 @@ export class PgAthleteProfileRepository implements AthleteProfileRepository {
   ): Promise<Result<AthleteProfile, AthleteProfilePersistenceError>> {
     try {
       await this.sql`
-        INSERT INTO athlete_profiles (id, person_id, status, created_at)
+        INSERT INTO athlete_profiles (id, person_id, status, version, created_at)
         VALUES (
           ${profile.id},
           ${profile.personId},
           ${profile.status},
+          ${profile.version},
           ${profile.createdAt}
         )
       `;
@@ -63,7 +64,7 @@ export class PgAthleteProfileRepository implements AthleteProfileRepository {
   async findById(id: Id<"AthleteProfile">): Promise<AthleteProfile | null> {
     const rows = await this.read(
       () => this.sql<AthleteProfileRow[]>`
-        SELECT id, person_id, status, created_at
+        SELECT id, person_id, status, version, created_at
         FROM athlete_profiles
         WHERE id = ${id}
         LIMIT 1
@@ -78,7 +79,7 @@ export class PgAthleteProfileRepository implements AthleteProfileRepository {
   ): Promise<AthleteProfile | null> {
     const rows = await this.read(
       () => this.sql<AthleteProfileRow[]>`
-        SELECT id, person_id, status, created_at
+        SELECT id, person_id, status, version, created_at
         FROM athlete_profiles
         WHERE person_id = ${personId}
         LIMIT 1

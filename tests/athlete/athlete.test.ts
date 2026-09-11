@@ -35,7 +35,7 @@ describe("createAthleteProfile", () => {
     if (!result.ok) throw new Error(result.error.message);
 
     const keys = Object.keys(result.value.profile);
-    expect(keys).toEqual(["id", "personId", "status", "createdAt"]);
+    expect(keys).toEqual(["id", "version", "personId", "status", "createdAt"]);
     expect(keys).not.toContain("displayName");
     expect(keys).not.toContain("dateOfBirth");
     expect(keys).not.toContain("sportsId");

@@ -11,6 +11,8 @@
     "lint": "eslint . --max-warnings 0",
     "architecture:check": "depcruise src --config .dependency-cruiser.cjs",
     "test": "vitest run",
+    "test:unit": "vitest run --exclude tests/integration/**",
+    "test:integration": "node scripts/require-test-database.cjs && vitest run tests/integration",
     "test:watch": "vitest",
     "preview": "vite preview"
   },

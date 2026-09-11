@@ -35,7 +35,7 @@ registration, payment, rewards, QR, or authorization tables.
 `id (text, PK)`, `display_name (text, NOT NULL, non-blank)`,
 `date_of_birth (date, nullable)`, `lifecycle_status (text, CHECK active |
 deactivated | archived | anonymized)`, `version (int, DEFAULT 1, CHECK >= 1)`,
-`created_at (timestamptz, DEFAULT now())`.
+`created_at (timestamptz, DEFAULT now())`, `updated_at (timestamptz, NOT NULL)`.
 
 - **Platform-global** — no `tenantId`.
 - **Date of birth is private.** It is never exposed by the public lookup paths
@@ -129,13 +129,20 @@ escapes an adapter.
 
 ## Aggregate versioning
 
-`persons` and `athlete_profiles` carry a `version` column for future optimistic
-concurrency; immutable history (`sports_ids`, `athlete_sport_participations`) and
-reference data (`sports`) do not. Initial version is `1`; a mutating write
-increments it and applies only when the stored version matches the caller's
-expected version, otherwise the write affects zero rows and the caller has lost
-the race. No update use case exists yet, so this is schema/contract foundation
-only and `version` is not surfaced on domain objects. See ADR-021.
+`persons` and `athlete_profiles` carry a domain-visible `AggregateVersion`;
+immutable history and reference data do not. A domain-created aggregate starts
+at version `1`, and creation persists that same `1`. For mutation, the loaded
+aggregate at N performs its transition and becomes N+1. The repository receives
+that updated aggregate plus expected version N and persists the supplied N+1
+only when storage still contains N. It never calculates the next version.
+Zero updated rows map to `concurrency_conflict` when the Person still exists and
+`not_found` otherwise. **Aggregate owns version advancement; persistence owns
+concurrency verification.** AthleteProfile uses the same creation/rehydration
+representation; no AthleteProfile mutation was added. See ADR-021.
+
+Person reads return a context-specific typed outcome: `found`, `not_found`,
+`unavailable`, or `invalid_persistence_state`. Malformed rows never become valid
+aggregates, and expected infrastructure failures do not escape as exceptions.
 
 ## Ownership and access classification
 
@@ -158,10 +165,11 @@ scope. See `operations/database.md` for the operational view.
 
 ## Events and durability
 
-Events are still published only **after** a successful persistence write, via
-the no-op publisher. Database durability and event publication are **not yet
-atomic** — there is no transactional outbox in Sprint 4, and no exactly-once
-delivery is claimed. Building the outbox is future work.
+The domain produces `PersonDeactivated` with aggregate version N+1 as part of
+the successful transition. The use case holds it until persistence succeeds,
+then publishes it. Failed/stale writes publish nothing. Database durability and
+event publication are **not atomic**; there is no transactional outbox and no
+exactly-once delivery claim.
 
 ## In-memory vs PostgreSQL
 
