@@ -5,6 +5,7 @@ import type {
   AthleteDomainEvent,
   AthleteProfileCreated,
 } from "@domain/athlete/athlete.events";
+import { INITIAL_AGGREGATE_VERSION } from "@domain/aggregate";
 
 /**
  * Everything `createAthleteProfile` needs, supplied as plain values. The domain
@@ -46,6 +47,7 @@ export function createAthleteProfile(
 
   const profile: AthleteProfile = {
     id: input.athleteProfileId,
+    version: INITIAL_AGGREGATE_VERSION,
     personId: input.personId,
     status: "active",
     createdAt: input.now,

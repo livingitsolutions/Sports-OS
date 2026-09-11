@@ -5,6 +5,16 @@ import type { Id, ISODateString } from "@shared/kernel";
  */
 export interface AggregateRoot<B extends string> {
   readonly id: Id<B>;
+  readonly version: AggregateVersion;
+}
+
+/** Positive logical revision owned and advanced by an aggregate root. */
+export type AggregateVersion = number & { readonly __brand: "AggregateVersion" };
+
+export const INITIAL_AGGREGATE_VERSION = 1 as AggregateVersion;
+
+export function nextAggregateVersion(version: AggregateVersion): AggregateVersion {
+  return (version + 1) as AggregateVersion;
 }
 
 /** Value object marker. Value objects are immutable and compared by value. */

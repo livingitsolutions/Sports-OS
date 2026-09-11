@@ -30,7 +30,10 @@ describe("InMemoryPersonRepository", () => {
     expect(repo.size).toBe(1);
 
     const found = await repo.findBySportsId("SID-1" as Id<"SportsId">);
-    expect(found?.id).toBe("p-1");
+    expect(found.kind).toBe("found");
+    if (found.kind !== "found") throw new Error("expected Person");
+    expect(found.person.id).toBe("p-1");
+    expect(found.person.version).toBe(1);
   });
 
   it("rejects a duplicate Person ID without overwriting", async () => {
@@ -55,9 +58,23 @@ describe("InMemoryPersonRepository", () => {
     expect(repo.size).toBe(1);
   });
 
-  it("returns null when no Person has the given Sports ID", async () => {
+  it("returns typed not_found when no Person has the given Sports ID", async () => {
     const repo = new InMemoryPersonRepository();
     const found = await repo.findBySportsId("missing" as Id<"SportsId">);
-    expect(found).toBeNull();
+    expect(found).toEqual({ kind: "not_found" });
+  });
+
+  it("persists only an aggregate-provided next version and rejects stale overwrite", async () => {
+    const repo = new InMemoryPersonRepository();
+    await repo.create(makePerson("p-1", "SID-1"));
+    const first = await repo.findById("p-1" as Id<"Person">);
+    const stale = await repo.findById("p-1" as Id<"Person">);
+    if (first.kind !== "found" || stale.kind !== "found") throw new Error("expected Person");
+    const saved = await repo.save({ ...first.person, lifecycleStatus: "deactivated", version: 2 as never }, first.person.version);
+    expect(saved.ok).toBe(true);
+    const rejected = await repo.save({ ...stale.person, lifecycleStatus: "archived", version: 2 as never }, stale.person.version);
+    expect(rejected).toEqual({ ok: false, error: { kind: "concurrency_conflict" } });
+    const current = await repo.findById("p-1" as Id<"Person">);
+    expect(current.kind === "found" && current.person.lifecycleStatus).toBe("deactivated");
   });
 });

@@ -6,6 +6,7 @@ export type { SportsIdGenerator } from "@app/contracts/sports-id-generator";
 export type {
   PersonRepository,
   PersonPersistenceError,
+  PersonLookupResult,
 } from "@app/contracts/person-repository";
 export type {
   AthleteProfileRepository,

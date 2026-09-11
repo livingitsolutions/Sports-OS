@@ -9,6 +9,7 @@ import type { DomainEvent, IntegrationEvent } from "@app/contracts/events";
 import { CreatePerson } from "@app/use-cases/create-person";
 import { CreateAthleteProfile } from "@app/use-cases/create-athlete-profile";
 import { AddAthleteSport } from "@app/use-cases/add-athlete-sport";
+import { DeactivatePerson } from "@app/use-cases/deactivate-person";
 import type { AppContainer } from "@composition/container";
 
 /**
@@ -56,6 +57,7 @@ export function createTestContainer(): TestContainer {
         personRepository,
         domainEvents,
       }),
+      deactivatePerson: new DeactivatePerson({ clock, idGenerator, personRepository, domainEvents }),
       createAthleteProfile: new CreateAthleteProfile({
         clock,
         idGenerator,

@@ -4,9 +4,11 @@ import type { Person, SportsId } from "@domain/identity/identity.types";
 import { issueSportsId } from "@domain/identity/sports-id";
 import type {
   IdentityDomainEvent,
+  PersonDeactivated,
   PersonCreated,
   SportsIdIssued,
 } from "@domain/identity/identity.events";
+import { INITIAL_AGGREGATE_VERSION, nextAggregateVersion } from "@domain/aggregate";
 
 const MAX_DISPLAY_NAME = 200;
 
@@ -79,6 +81,8 @@ export function createPerson(
   const sportsId = issueSportsId(input.sportsIdValue, input.now);
   const person: Person = {
     id: input.personId,
+    version: INITIAL_AGGREGATE_VERSION,
+    updatedAt: input.now,
     sportsId,
     displayName,
     dateOfBirth,
@@ -106,6 +110,38 @@ export function createPerson(
   return Result.ok({ person, sportsId, events: [personCreated, sportsIdIssued] });
 }
 
+export interface DeactivatePersonInput {
+  readonly now: ISODateString;
+  readonly eventId: string;
+}
+
+export interface DeactivatedPerson {
+  readonly person: Person;
+  readonly event: PersonDeactivated;
+}
+
+/** Performs the lifecycle transition and advances the aggregate exactly once. */
+export function deactivatePerson(
+  person: Person,
+  input: DeactivatePersonInput,
+): Result<DeactivatedPerson, DomainError> {
+  if (person.lifecycleStatus !== "active") {
+    return Result.fail(err("person_not_active", "Only an active Person can be deactivated."));
+  }
+  const version = nextAggregateVersion(person.version);
+  const updated = { ...person, lifecycleStatus: "deactivated", version, updatedAt: input.now } as Person;
+  const event: PersonDeactivated = {
+    type: "identity.person_deactivated",
+    eventId: input.eventId,
+    occurredAt: input.now,
+    aggregateId: person.id,
+    aggregateType: "Person",
+    personId: person.id,
+    aggregateVersion: version,
+  };
+  return Result.ok({ person: updated, event });
+}
+
 /**
  * Representative "normal" Person mutation. It changes mutable identity data and
  * deliberately preserves the Sports ID untouched: there is no domain operation
@@ -124,7 +160,7 @@ export function renamePerson(
       err("invalid_display_name", `Display name must be at most ${MAX_DISPLAY_NAME} characters.`),
     );
   }
-  return Result.ok({ ...person, displayName });
+  return Result.ok({ ...person, displayName, version: nextAggregateVersion(person.version) });
 }
 
 function err(code: string, message: string): DomainError {

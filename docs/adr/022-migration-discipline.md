@@ -31,10 +31,10 @@ Adopt the following migration rules for all schema changes.
    migration. History is append-only so any environment can be rebuilt by
    replaying migrations in order.
 
-3. **Deterministic and idempotent.** Migrations use `IF NOT EXISTS` /
-   `IF EXISTS` and drop-then-create for policies, so re-running one is safe and
-   produces the same result. Each begins with a markdown summary describing the
-   change for technical and non-technical readers.
+3. **Deterministic without hidden drift.** Idempotence is appropriate for data
+   seeds and explicitly repeatable operations. Structural migrations must not
+   use indiscriminate `IF NOT EXISTS` / `IF EXISTS` when doing so could conceal
+   an unexpected schema. Each begins with a summary of the change.
 
 4. **Destructive changes require review.** No `DROP TABLE`, `DROP COLUMN`,
    column-type change, or table rename without explicit review — these lose

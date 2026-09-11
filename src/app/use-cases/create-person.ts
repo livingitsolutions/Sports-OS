@@ -75,13 +75,17 @@ export class CreatePerson
 
     const personId = this.deps.idGenerator.next("Person");
 
-    const sportsIdValue = await this.reserveUniqueSportsId();
-    if (sportsIdValue === null) {
+    const reservation = await this.reserveUniqueSportsId();
+    if (reservation.kind === "unavailable") {
+      return failure("persistence_unavailable", "Person storage is currently unavailable.");
+    }
+    if (reservation.kind === "exhausted") {
       return failure(
         "sports_id_collision",
         `Could not obtain a unique Sports ID after ${this.maxSportsIdAttempts} attempts.`,
       );
     }
+    const sportsIdValue = reservation.value;
 
     const now = this.deps.clock.now();
     const created = createPerson({
@@ -109,6 +113,10 @@ export class CreatePerson
             "persistence_unavailable",
             persisted.error.detail ?? "Person storage is currently unavailable.",
           );
+        case "not_found":
+        case "concurrency_conflict":
+        case "invalid_persistence_state":
+          return failure("persistence_unavailable", "Person storage rejected an invalid create state.");
       }
     }
 
@@ -124,13 +132,18 @@ export class CreatePerson
     };
   }
 
-  private async reserveUniqueSportsId(): Promise<Id<"SportsId"> | null> {
+  private async reserveUniqueSportsId(): Promise<
+    | { readonly kind: "available"; readonly value: Id<"SportsId"> }
+    | { readonly kind: "exhausted" }
+    | { readonly kind: "unavailable" }
+  > {
     for (let attempt = 0; attempt < this.maxSportsIdAttempts; attempt += 1) {
       const candidate = this.deps.sportsIdGenerator.next();
       const existing = await this.deps.personRepository.findBySportsId(candidate);
-      if (existing === null) return candidate;
+      if (existing.kind === "not_found") return { kind: "available", value: candidate };
+      if (existing.kind === "unavailable" || existing.kind === "invalid_persistence_state") return { kind: "unavailable" };
     }
-    return null;
+    return { kind: "exhausted" };
   }
 }
 

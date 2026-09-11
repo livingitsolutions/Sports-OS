@@ -68,9 +68,10 @@ export class CreateAthleteProfile
     }
 
     const person = await this.deps.personRepository.findById(personId);
-    if (person === null) {
+    if (person.kind === "not_found") {
       return failure("person_not_found", "No Person exists for this identifier.");
     }
+    if (person.kind !== "found") return failure("persistence_unavailable", "Person storage is currently unavailable.");
 
     const existing =
       await this.deps.athleteProfileRepository.findByPersonId(personId);

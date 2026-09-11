@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted — **schema foundation established in Sprint 4**.
+Accepted — **corrected and exercised in Sprint 4.2**.
 
 ## Date
 
@@ -34,19 +34,27 @@ concept.
    update contended by concurrent writers.
 
 3. **Semantics (domain-level, storage-independent):**
-   - **Initial version** is `1` on creation.
-   - **Increment:** every successful mutating write increments the version by 1.
+   - **Initial version** is `1` in the domain-created aggregate; creation
+     persists that same `1`.
+   - **Ownership:** aggregate owns version advancement; persistence owns
+     concurrency verification.
+   - **Increment:** a successful domain mutation changes N to N+1 before save.
    - **Expected-version update:** an update carries the version the caller read;
      the write applies only if the stored version still equals it
-     (`UPDATE ... WHERE id = $id AND version = $expected`).
+     together with the updated aggregate carrying N+1. Persistence writes the
+     supplied N+1 using `UPDATE ... WHERE id = $id AND version = $expected`.
    - **Stale write:** if no row matches the expected version, the update affected
      zero rows — the caller lost the race and must re-read and retry or surface a
      conflict. This maps to a typed outcome, never a silent overwrite.
 
-4. **Not surfaced on domain objects yet.** `version` is a persistence concern
-   until an update use case needs it. It is not part of the current domain types
-   and is not selected into domain objects. When the first update slice arrives,
-   the version travels through the repository contract, not as a raw column.
+4. **Domain-visible value.** `AggregateVersion` is carried by Person and
+   AthleteProfile and rehydrated from storage. Repositories verify it; they do
+   not independently increment it.
+
+5. **Event meaning.** A mutation event describes the completed domain
+   transition and carries the aggregate's N+1 version where relevant. The
+   repository never patches or manufactures it. Publication follows successful
+   persistence; atomic database/message delivery remains future work.
 
 ## Consequences
 

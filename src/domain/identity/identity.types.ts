@@ -1,4 +1,5 @@
 import type { Id, ISODateString } from "@shared/kernel";
+import type { AggregateVersion } from "@domain/aggregate";
 
 /**
  * Permanent Sports ID value object.
@@ -33,6 +34,8 @@ export type SportsIdStatus = "active" | "revoked";
  */
 export interface Person {
   readonly id: Id<"Person">;
+  readonly version: AggregateVersion;
+  readonly updatedAt: ISODateString;
   readonly sportsId: SportsId | null;
   readonly displayName: string;
   /**

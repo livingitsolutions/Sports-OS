@@ -11,6 +11,7 @@ import type {
 import type { CreatePerson } from "@app/use-cases/create-person";
 import type { CreateAthleteProfile } from "@app/use-cases/create-athlete-profile";
 import type { AddAthleteSport } from "@app/use-cases/add-athlete-sport";
+import type { DeactivatePerson } from "@app/use-cases/deactivate-person";
 
 /**
  * The set of application capabilities and use cases wired at startup. This is
@@ -34,4 +35,5 @@ export interface AppUseCases {
   readonly createPerson: CreatePerson;
   readonly createAthleteProfile: CreateAthleteProfile;
   readonly addAthleteSport: AddAthleteSport;
+  readonly deactivatePerson: DeactivatePerson;
 }

@@ -1,128 +1,73 @@
-import type {
-  PersonPersistenceError,
-  PersonRepository,
-} from "@app/contracts/person-repository";
-import type { Person } from "@domain/identity/identity.types";
-import type { Id, Result } from "@shared/kernel";
+import type { PersonLookupResult, PersonPersistenceError, PersonRepository } from "@app/contracts/person-repository";
 import type { Sql } from "@adapters/persistence/pg/connection";
-import {
-  isUniqueViolation,
-  neutralDetail,
-  pgErrorInfo,
-} from "@adapters/persistence/pg/errors";
+import { isUniqueViolation, neutralDetail, pgErrorInfo } from "@adapters/persistence/pg/errors";
 import type { PersonRow } from "@adapters/persistence/pg/mappers";
 import { toPerson } from "@adapters/persistence/pg/mappers";
+import type { AggregateVersion } from "@domain/aggregate";
+import type { Person } from "@domain/identity/identity.types";
+import type { Id, Result } from "@shared/kernel";
 
-/**
- * PostgreSQL PersonRepository.
- *
- * Persists the Person aggregate together with its one-to-one Sports ID inside a
- * single database transaction, so a successful create can never leave a Person
- * without a Sports ID or a Sports ID without a Person. Uniqueness (Person ID,
- * public Sports ID, one-Sports-ID-per-Person) is enforced by database
- * constraints; conflicts are translated into typed `PersonPersistenceError`
- * outcomes. No driver error escapes this adapter.
- */
 export class PgPersonRepository implements PersonRepository {
   constructor(private readonly sql: Sql) {}
 
-  async create(
-    person: Person,
-  ): Promise<Result<Person, PersonPersistenceError>> {
-    if (person.sportsId === null) {
-      return {
-        ok: false,
-        error: { kind: "unavailable", detail: "A Person must carry a Sports ID." },
-      };
-    }
-    const sportsId = person.sportsId;
-
+  async create(person: Person): Promise<Result<Person, PersonPersistenceError>> {
+    if (person.version !== 1 || person.sportsId === null) return invalidState("A new Person must carry a Sports ID at version 1.");
     try {
+      const sportsId = person.sportsId;
       await this.sql.begin(async (tx) => {
-        await tx`
-          INSERT INTO persons (id, display_name, date_of_birth, lifecycle_status)
-          VALUES (
-            ${person.id},
-            ${person.displayName},
-            ${person.dateOfBirth},
-            ${person.lifecycleStatus}
-          )
-        `;
-        await tx`
-          INSERT INTO sports_ids (value, person_id, issued_at, status)
-          VALUES (
-            ${sportsId.value},
-            ${person.id},
-            ${sportsId.issuedAt},
-            ${sportsId.status}
-          )
-        `;
+        await tx`INSERT INTO persons (id, display_name, date_of_birth, lifecycle_status, version, updated_at)
+          VALUES (${person.id}, ${person.displayName}, ${person.dateOfBirth}, ${person.lifecycleStatus}, ${person.version}, ${person.updatedAt})`;
+        await tx`INSERT INTO sports_ids (value, person_id, issued_at, status)
+          VALUES (${sportsId.value}, ${person.id}, ${sportsId.issuedAt}, ${sportsId.status})`;
       });
       return { ok: true, value: person };
-    } catch (err) {
-      return { ok: false, error: mapCreateError(err) };
-    }
+    } catch (error) { return { ok: false, error: mapCreateError(error) }; }
   }
 
-  async findBySportsId(sportsId: Id<"SportsId">): Promise<Person | null> {
-    const rows = await this.read(
-      () => this.sql<PersonRow[]>`
-        SELECT
-          p.id,
-          p.display_name,
-          p.date_of_birth::text AS date_of_birth,
-          p.lifecycle_status,
-          s.value AS sports_id_value,
-          s.issued_at AS sports_id_issued_at,
-          s.status AS sports_id_status
-        FROM persons p
-        JOIN sports_ids s ON s.person_id = p.id
-        WHERE s.value = ${sportsId}
-        LIMIT 1
-      `,
-    );
-    const row = rows[0];
-    return row !== undefined ? toPerson(row) : null;
+  findBySportsId(sportsId: Id<"SportsId">): Promise<PersonLookupResult> {
+    return this.read(() => this.sql<PersonRow[]>`SELECT p.id, p.display_name, p.date_of_birth::text AS date_of_birth,
+      p.lifecycle_status, p.version, p.updated_at, s.value AS sports_id_value,
+      s.issued_at AS sports_id_issued_at, s.status AS sports_id_status
+      FROM persons p LEFT JOIN sports_ids s ON s.person_id = p.id WHERE s.value = ${sportsId} LIMIT 1`);
   }
 
-  async findById(personId: Id<"Person">): Promise<Person | null> {
-    const rows = await this.read(
-      () => this.sql<PersonRow[]>`
-        SELECT
-          p.id,
-          p.display_name,
-          p.date_of_birth::text AS date_of_birth,
-          p.lifecycle_status,
-          s.value AS sports_id_value,
-          s.issued_at AS sports_id_issued_at,
-          s.status AS sports_id_status
-        FROM persons p
-        LEFT JOIN sports_ids s ON s.person_id = p.id
-        WHERE p.id = ${personId}
-        LIMIT 1
-      `,
-    );
-    const row = rows[0];
-    return row !== undefined ? toPerson(row) : null;
+  findById(personId: Id<"Person">): Promise<PersonLookupResult> {
+    return this.read(() => this.sql<PersonRow[]>`SELECT p.id, p.display_name, p.date_of_birth::text AS date_of_birth,
+      p.lifecycle_status, p.version, p.updated_at, s.value AS sports_id_value,
+      s.issued_at AS sports_id_issued_at, s.status AS sports_id_status
+      FROM persons p LEFT JOIN sports_ids s ON s.person_id = p.id WHERE p.id = ${personId} LIMIT 1`);
   }
 
-  private async read<T>(run: () => Promise<T>): Promise<T> {
+  async save(person: Person, expectedVersion: AggregateVersion): Promise<Result<Person, PersonPersistenceError>> {
+    if (person.version !== expectedVersion + 1) return invalidState("Updated version must be exactly expected version plus one.");
     try {
-      return await run();
-    } catch (err) {
-      throw new Error(`person_repository_read_failed: ${neutralDetail(err)}`);
-    }
+      const rows = await this.sql<{ id: string }[]>`UPDATE persons
+        SET lifecycle_status = ${person.lifecycleStatus}, version = ${person.version}, updated_at = ${person.updatedAt}
+        WHERE id = ${person.id} AND version = ${expectedVersion} RETURNING id`;
+      if (rows.length === 1) return { ok: true, value: person };
+      const found = await this.sql<{ exists: boolean }[]>`SELECT EXISTS(SELECT 1 FROM persons WHERE id = ${person.id}) AS exists`;
+      return { ok: false, error: { kind: found[0]?.exists === true ? "concurrency_conflict" : "not_found" } };
+    } catch (error) { return { ok: false, error: { kind: "unavailable", detail: neutralDetail(error) } }; }
+  }
+
+  private async read(run: () => Promise<PersonRow[]>): Promise<PersonLookupResult> {
+    try {
+      const row = (await run())[0];
+      if (row === undefined) return { kind: "not_found" };
+      const person = toPerson(row);
+      return person === null
+        ? { kind: "invalid_persistence_state", detail: "Stored Person record violates persistence invariants." }
+        : { kind: "found", person };
+    } catch (error) { return { kind: "unavailable", detail: neutralDetail(error) }; }
   }
 }
 
-function mapCreateError(err: unknown): PersonPersistenceError {
-  const info = pgErrorInfo(err);
-  if (isUniqueViolation(info) && info !== null) {
-    if (info.constraint.includes("persons_pkey")) {
-      return { kind: "duplicate_person_id" };
-    }
-    // Any Sports ID uniqueness conflict (public value or one-per-person).
-    return { kind: "duplicate_sports_id" };
-  }
-  return { kind: "unavailable", detail: neutralDetail(err) };
+function mapCreateError(error: unknown): PersonPersistenceError {
+  const info = pgErrorInfo(error);
+  if (isUniqueViolation(info) && info !== null) return { kind: info.constraint.includes("persons_pkey") ? "duplicate_person_id" : "duplicate_sports_id" };
+  return { kind: "unavailable", detail: neutralDetail(error) };
+}
+
+function invalidState(detail: string): Result<never, PersonPersistenceError> {
+  return { ok: false, error: { kind: "invalid_persistence_state", detail } };
 }

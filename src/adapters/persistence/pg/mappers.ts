@@ -11,6 +11,7 @@ import type {
   ParticipationStatus,
 } from "@domain/athlete/athlete.types";
 import type { Id, ISODateString } from "@shared/kernel";
+import type { AggregateVersion } from "@domain/aggregate";
 
 /**
  * Explicit row <-> domain mapping. Database row shapes never leak into the
@@ -27,12 +28,23 @@ export interface PersonRow {
   /** Selected as `date_of_birth::text`, so this is 'YYYY-MM-DD' or null. */
   readonly date_of_birth: string | null;
   readonly lifecycle_status: string;
+  readonly version: number;
+  readonly updated_at: Date;
   readonly sports_id_value: string | null;
   readonly sports_id_issued_at: Date | null;
   readonly sports_id_status: string | null;
 }
 
-export function toPerson(row: PersonRow): Person {
+export function toPerson(row: PersonRow): Person | null {
+  if (
+    typeof row.id !== "string" || row.id.length === 0 ||
+    typeof row.display_name !== "string" || row.display_name.trim().length === 0 ||
+    !["active", "deactivated", "archived", "anonymized"].includes(row.lifecycle_status) ||
+    !Number.isInteger(row.version) || row.version < 1 ||
+    !(row.updated_at instanceof Date) || Number.isNaN(row.updated_at.getTime()) ||
+    row.sports_id_value === null || row.sports_id_issued_at === null ||
+    !["active", "revoked"].includes(row.sports_id_status ?? "")
+  ) return null;
   const sportsId: SportsId | null =
     row.sports_id_value !== null && row.sports_id_issued_at !== null
       ? {
@@ -44,6 +56,8 @@ export function toPerson(row: PersonRow): Person {
 
   return {
     id: row.id as Id<"Person">,
+    version: row.version as AggregateVersion,
+    updatedAt: row.updated_at.toISOString() as ISODateString,
     sportsId,
     displayName: row.display_name,
     dateOfBirth: row.date_of_birth,
@@ -56,11 +70,13 @@ export interface AthleteProfileRow {
   readonly person_id: string;
   readonly status: string;
   readonly created_at: Date;
+  readonly version: number;
 }
 
 export function toAthleteProfile(row: AthleteProfileRow): AthleteProfile {
   return {
     id: row.id as Id<"AthleteProfile">,
+    version: row.version as AggregateVersion,
     personId: row.person_id as Id<"Person">,
     status: row.status as AthleteProfileStatus,
     createdAt: row.created_at.toISOString() as ISODateString,
