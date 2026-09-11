@@ -8,7 +8,7 @@
 > birth is stored as private data and never exposed by public lookups. See
 > `../persistence-model.md` and ADR-020.
 
-## Person vs User vs AthleteProfile
+## Person vs Account vs AthleteProfile
 
 These are **distinct** concepts. Conflating them is the most common modeling
 error in sports platforms and is explicitly forbidden here.
@@ -16,15 +16,23 @@ error in sports platforms and is explicitly forbidden here.
 | Concept | What it is | Lifecycle | Identity | Ownership [C] |
 |---|---|---|---|---|
 | **Person** | The natural/legal human being. The permanent identity subject. | Survives account closure via deactivation/archival. Holds the Sports ID forever. | `Id<"Person">` | Platform-global (no `tenantId`) |
-| **User** | An authentication subject — a credential holder that logs in. | Tied to an account; can be disabled, locked, recreated. May not exist for minors. | `Id<"User">` (future) | Platform-global |
+| **Account** | The platform link from one externally authenticated subject to one Person. It contains no credentials or sports/profile data. | Can be active or disabled independently of Person lifecycle. | `Id<"Account">` | Platform-global |
 | **AthleteProfile** | An **optional** sport-independent sporting identity projection of a Person. | Created only when a Person becomes an athlete. One per Person max. | `Id<"AthleteProfile">` | Person-owned (no `tenantId`) |
 
 Key rules:
 
 - A **Person** has at most one **Sports ID** (R2). The Sports ID is permanent
   and **platform-global** [C] — it does not belong to any tenant or organization.
-- A **Person** may have zero or more **Users** over time. A User is never the
-  source of identity; the Person is.
+- **[S5]** A **Person** may have zero or one **Account**. Every Account maps to
+  exactly one existing Person, and its `authSubject` uniquely identifies the
+  external Supabase Auth user. Creating a Person does not create an Account.
+- Supabase `auth.users` remains an external authentication identity. Account is
+  the platform bridge to Person; it stores no passwords, tokens, Sports ID, or
+  AthleteProfile data. Provider-specific session/user types stay in adapters.
+- **[S5.1]** Authentication answers “Who is logged in?” It does not authorize
+  an arbitrary Person linkage. A single-use `PersonClaim` answers “Which
+  existing Person may this identity claim?” Only a valid pending, unexpired
+  claim supplies the Person ID used to create the Account.
 - **[C]** A Person **MAY** have at most one `AthleteProfile` (R3). A Person
   does **not** automatically become an athlete. A Person may exist only as a
   coach, guardian, official, organizer, staff member, sponsor representative,
@@ -39,7 +47,8 @@ Key rules:
 erDiagram
   Person ||--o| SportsId : holds
   Person ||--o| AthleteProfile : "may project as (optional)"
-  Person ||--o| User : "authenticates via (zero or more, over time)"
+  Person ||--o| Account : "may authenticate through"
+  Person ||--o{ PersonClaim : "may be authorized by"
 ```
 
 > **[S3]** `AthleteProfile` is now modelled in a dedicated **Athlete** bounded

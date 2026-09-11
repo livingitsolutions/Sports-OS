@@ -1,5 +1,23 @@
 # Persistence Model
 
+## Sprint 5 authentication linkage
+
+`accounts` is the narrow platform-owned bridge from an external Supabase Auth
+subject to an existing `persons` row. Unique constraints on `auth_subject` and
+`person_id` enforce one Account per auth identity and at most one Account per
+Person; the foreign key prevents an Account without a Person. Account owns
+neither Sports ID nor AthleteProfile. Its RLS is enabled with no public policies,
+matching the trusted server-side PostgreSQL persistence model used by Sprint 4.
+
+Sprint 5.1 adds `person_claims`. It stores only a unique HMAC digest of a
+high-entropy bearer token, never the raw token. A partial unique index permits
+at most one pending claim per Person; reissuance atomically revokes the prior
+pending claim using a domain-provided next version. Account creation and the
+conditional pending-to-consumed claim update share one PostgreSQL transaction.
+Both issuance and consumption lock the Person row, serializing them with each
+other, while the conditional claim version/status/expiry predicate rejects
+stale, replayed, expired, revoked, or concurrent attempts.
+
 > How SportsOS stores the Sprint 4 slice of data. Applies to Person, Sports ID,
 > AthleteProfile, AthleteSportParticipation, and minimal Sport reference data.
 > Introduced in architecture v0.6.0 (Sprint 4). See ADR-020 (adapter), ADR-021
