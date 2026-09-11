@@ -4,12 +4,20 @@
 
 ## Current version
 
-**SportsOS Architecture v0.8.0 — Sprint 5.2 (Trusted Claim Issuance Runtime)**
+**SportsOS Architecture v0.9.0 — Sprint 5.3 (Authenticated Account-Link Boundary)**
 
 - Date: 2026-09-11
-- Sprint: 5.2 (trusted claim issuance and HMAC key rotation)
+- Sprint: 5.3 (authenticated account-link server boundary)
 - Status: Active
-- Supersedes: v0.7.0 (Sprint 5.1)
+- Supersedes: v0.8.0 (Sprint 5.2)
+
+## What changed in v0.9.0 (Sprint 5.3)
+
+A single Netlify server endpoint now exposes the existing account-link use case.
+It creates request-scoped Supabase caller validation and PostgreSQL composition,
+accepts only the claim credential, and preserves the claim-derived Person and
+atomic transaction. Transport validation and conservative secret-free HTTP
+mapping live in an adapter. Claim issuance remains internal and unexposed.
 
 ## What changed in v0.8.0 (Sprint 5.2)
 
