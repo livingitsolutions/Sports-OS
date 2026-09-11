@@ -1,6 +1,6 @@
 import type { Account } from "@domain/auth/account";
 import type { AggregateVersion } from "@domain/aggregate";
-import type { ClaimTokenHash, PersonClaim } from "@domain/auth/person-claim";
+import type { ClaimLookupId, PersonClaim } from "@domain/auth/person-claim";
 import type { Result } from "@shared/kernel";
 
 export type PersonClaimPersistenceError =
@@ -15,7 +15,7 @@ export type PersonClaimLookupResult =
 export interface PersonClaimRepository {
   /** Atomically revokes any pending claim for the Person and creates this claim. */
   issueReplacingPending(claim: PersonClaim, replacement?: { readonly revokedClaim: PersonClaim; readonly expectedVersion: AggregateVersion }): Promise<Result<PersonClaim, PersonClaimPersistenceError>>;
-  findByTokenHash(tokenHash: ClaimTokenHash): Promise<PersonClaimLookupResult>;
+  findByLookupId(lookupId: ClaimLookupId): Promise<PersonClaimLookupResult>;
   findPendingByPersonId(personId: import("@shared/kernel").Id<"Person">): Promise<PersonClaimLookupResult>;
 }
 

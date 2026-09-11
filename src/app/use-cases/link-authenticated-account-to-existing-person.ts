@@ -1,4 +1,4 @@
-import type { AccountRepository, AppError, AuthIdentityProvider, ClaimAccountLinkRepository, ClaimTokenHasher, Clock, IdGenerator, PersonClaimRepository, PersonRepository, RawClaimToken, UseCase } from "@app/contracts";
+import type { AccountRepository, AppError, AuthIdentityProvider, ClaimAccountLinkRepository, ClaimHashKeyProvider, ClaimTokenGenerator, Clock, IdGenerator, PersonClaimRepository, PersonRepository, RawClaimToken, UseCase } from "@app/contracts";
 import { createAccount } from "@domain/auth/account";
 import type { Account } from "@domain/auth/account";
 import { consumePersonClaim } from "@domain/auth/person-claim";
@@ -7,9 +7,9 @@ import type { Result } from "@shared/kernel";
 /** No personId is accepted: the verified claim is the only source of Person authority. */
 export interface LinkAuthenticatedAccountInput { readonly rawClaimToken: RawClaimToken; }
 export interface LinkAuthenticatedAccountOutput { readonly account: Account; }
-export type LinkAuthenticatedAccountErrorKind = "authenticated_subject_required" | "identity_provider_unavailable" | "invalid_claim" | "expired_claim" | "consumed_claim" | "revoked_claim" | "person_not_found" | "person_not_linkable" | "auth_subject_already_linked" | "person_already_linked" | "persistence_unavailable" | "concurrency_conflict";
+export type LinkAuthenticatedAccountErrorKind = "authenticated_subject_required" | "identity_provider_unavailable" | "invalid_claim" | "hash_key_unavailable" | "expired_claim" | "consumed_claim" | "revoked_claim" | "person_not_found" | "person_not_linkable" | "auth_subject_already_linked" | "person_already_linked" | "persistence_unavailable" | "concurrency_conflict";
 export interface LinkAuthenticatedAccountError extends AppError { readonly kind: LinkAuthenticatedAccountErrorKind; }
-export interface LinkAuthenticatedAccountDeps { readonly authIdentityProvider: AuthIdentityProvider; readonly tokenHasher: ClaimTokenHasher; readonly personClaimRepository: PersonClaimRepository; readonly claimAccountLinkRepository: ClaimAccountLinkRepository; readonly accountRepository: AccountRepository; readonly personRepository: PersonRepository; readonly idGenerator: IdGenerator; readonly clock: Clock; }
+export interface LinkAuthenticatedAccountDeps { readonly authIdentityProvider: AuthIdentityProvider; readonly tokenGenerator: ClaimTokenGenerator; readonly hashKeys: ClaimHashKeyProvider; readonly personClaimRepository: PersonClaimRepository; readonly claimAccountLinkRepository: ClaimAccountLinkRepository; readonly accountRepository: AccountRepository; readonly personRepository: PersonRepository; readonly idGenerator: IdGenerator; readonly clock: Clock; }
 
 export class LinkAuthenticatedAccountToExistingPerson implements UseCase<LinkAuthenticatedAccountInput, LinkAuthenticatedAccountOutput> {
   constructor(private readonly deps: LinkAuthenticatedAccountDeps) {}
@@ -17,9 +17,15 @@ export class LinkAuthenticatedAccountToExistingPerson implements UseCase<LinkAut
     const identity = await this.deps.authIdentityProvider.getCurrentIdentity();
     if (identity.kind === "unauthenticated") return failure("authenticated_subject_required", "An authenticated identity is required.");
     if (identity.kind === "unavailable") return failure("identity_provider_unavailable", "Authentication is currently unavailable.");
-    const lookup = await this.deps.personClaimRepository.findByTokenHash(this.deps.tokenHasher.hash(input.rawClaimToken));
+    const parsed = this.deps.tokenGenerator.parse(input.rawClaimToken);
+    if (parsed === null) return failure("invalid_claim", "The claim is invalid.");
+    const lookup = await this.deps.personClaimRepository.findByLookupId(parsed.lookupId);
     if (lookup.kind === "not_found") return failure("invalid_claim", "The claim is invalid.");
     if (lookup.kind !== "found") return failure("persistence_unavailable", "Claim storage is currently unavailable.");
+    if (parsed.version !== lookup.claim.hashKeyVersion) return failure("invalid_claim", "The claim is invalid.");
+    const verified = this.deps.hashKeys.verify(lookup.claim.hashKeyVersion, lookup.claim.lookupId, parsed.secret, lookup.claim.tokenHash);
+    if (!verified.ok) return failure("hash_key_unavailable", "The claim hash key is unavailable.");
+    if (!verified.matches) return failure("invalid_claim", "The claim is invalid.");
     const now = this.deps.clock.now();
     const consumed = consumePersonClaim(lookup.claim, now);
     if (!consumed.ok) return failure(consumed.error.code, consumed.error.message);

@@ -17,6 +17,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@netlify/functions": "^6.0.0",
     "@supabase/supabase-js": "^2.116.0",
     "postgres": "^3.4.5",
     "react": "^18.3.1",

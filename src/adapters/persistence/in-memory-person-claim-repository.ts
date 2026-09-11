@@ -1,7 +1,7 @@
 import type { AccountRepository, ClaimAccountLinkError, ClaimAccountLinkRepository, PersonClaimLookupResult, PersonClaimPersistenceError, PersonClaimRepository } from "@app/contracts";
 import type { Account } from "@domain/auth/account";
 import type { AggregateVersion } from "@domain/aggregate";
-import type { ClaimTokenHash, PersonClaim } from "@domain/auth/person-claim";
+import type { ClaimLookupId, PersonClaim } from "@domain/auth/person-claim";
 import type { Result } from "@shared/kernel";
 
 export class InMemoryPersonClaimRepository implements PersonClaimRepository, ClaimAccountLinkRepository {
@@ -20,8 +20,8 @@ export class InMemoryPersonClaimRepository implements PersonClaimRepository, Cla
     this.claims.set(claim.id, claim);
     return { ok: true, value: claim };
   }
-  async findByTokenHash(tokenHash: ClaimTokenHash): Promise<PersonClaimLookupResult> {
-    const claim = [...this.claims.values()].find((value) => value.tokenHash === tokenHash);
+  async findByLookupId(lookupId: ClaimLookupId): Promise<PersonClaimLookupResult> {
+    const claim = [...this.claims.values()].find((value) => value.lookupId === lookupId);
     return claim === undefined ? { kind: "not_found" } : { kind: "found", claim };
   }
   async findPendingByPersonId(personId: import("@shared/kernel").Id<"Person">): Promise<PersonClaimLookupResult> {
