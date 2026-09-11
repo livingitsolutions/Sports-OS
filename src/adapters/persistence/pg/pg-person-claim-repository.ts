@@ -3,10 +3,10 @@ import type { Sql } from "@adapters/persistence/pg/connection";
 import { neutralDetail, pgErrorInfo } from "@adapters/persistence/pg/errors";
 import type { Account } from "@domain/auth/account";
 import type { AggregateVersion } from "@domain/aggregate";
-import type { ClaimTokenHash, PersonClaim, PersonClaimStatus } from "@domain/auth/person-claim";
+import type { ClaimHashKeyVersion, ClaimIssuerType, ClaimLookupId, ClaimTokenHash, PersonClaim, PersonClaimStatus } from "@domain/auth/person-claim";
 import type { Id, ISODateString, Result } from "@shared/kernel";
 
-interface ClaimRow { id: string; person_id: string; token_hash: string; status: string; expires_at: Date | string; consumed_at: Date | string | null; created_at: Date | string; updated_at: Date | string; version: number; }
+interface ClaimRow { id:string;person_id:string;token_hash:string;lookup_id:string;hash_key_version:string;issued_by_type:string;issued_by_subject:string;status:string;expires_at:Date|string;consumed_at:Date|string|null;created_at:Date|string;updated_at:Date|string;version:number; }
 export class PgPersonClaimRepository implements PersonClaimRepository, ClaimAccountLinkRepository {
   constructor(private readonly sql: Sql) {}
   async issueReplacingPending(claim: PersonClaim, replacement?: { readonly revokedClaim: PersonClaim; readonly expectedVersion: AggregateVersion }): Promise<Result<PersonClaim, PersonClaimPersistenceError>> {
@@ -24,14 +24,14 @@ export class PgPersonClaimRepository implements PersonClaimRepository, ClaimAcco
           const changed = await tx<{ id: string }[]>`UPDATE person_claims SET status=${replacement.revokedClaim.status}, updated_at=${replacement.revokedClaim.updatedAt}, version=${replacement.revokedClaim.version} WHERE id=${replacement.revokedClaim.id} AND status='pending' AND version=${replacement.expectedVersion} RETURNING id`;
           if (changed.length !== 1) return { ok: false, error: { kind: "concurrency_conflict" } } as const;
         }
-        await tx`INSERT INTO person_claims (id, person_id, token_hash, status, expires_at, consumed_at, created_at, updated_at, version) VALUES (${claim.id}, ${claim.personId}, ${claim.tokenHash}, ${claim.status}, ${claim.expiresAt}, ${claim.consumedAt}, ${claim.createdAt}, ${claim.updatedAt}, ${claim.version})`;
+        await tx`INSERT INTO person_claims (id, person_id, token_hash, lookup_id, hash_key_version, issued_by_type, issued_by_subject, status, expires_at, consumed_at, created_at, updated_at, version) VALUES (${claim.id}, ${claim.personId}, ${claim.tokenHash}, ${claim.lookupId}, ${claim.hashKeyVersion}, ${claim.issuedBy.type}, ${claim.issuedBy.subject}, ${claim.status}, ${claim.expiresAt}, ${claim.consumedAt}, ${claim.createdAt}, ${claim.updatedAt}, ${claim.version})`;
         return { ok: true, value: claim } as const;
       });
     } catch (error) { return { ok: false, error: mapIssueError(error) }; }
   }
-  async findByTokenHash(tokenHash: ClaimTokenHash): Promise<PersonClaimLookupResult> {
+  async findByLookupId(lookupId: ClaimLookupId): Promise<PersonClaimLookupResult> {
     try {
-      const rows = await this.sql<ClaimRow[]>`SELECT id, person_id, token_hash, status, expires_at, consumed_at, created_at, updated_at, version FROM person_claims WHERE token_hash=${tokenHash} LIMIT 1`;
+      const rows = await this.sql<ClaimRow[]>`SELECT id, person_id, token_hash, lookup_id, hash_key_version, issued_by_type, issued_by_subject, status, expires_at, consumed_at, created_at, updated_at, version FROM person_claims WHERE lookup_id=${lookupId} LIMIT 1`;
       if (rows[0] === undefined) return { kind: "not_found" };
       const claim = toClaim(rows[0]);
       return claim === null ? { kind: "invalid_persistence_state" } : { kind: "found", claim };
@@ -39,7 +39,7 @@ export class PgPersonClaimRepository implements PersonClaimRepository, ClaimAcco
   }
   async findPendingByPersonId(personId: Id<"Person">): Promise<PersonClaimLookupResult> {
     try {
-      const rows = await this.sql<ClaimRow[]>`SELECT id, person_id, token_hash, status, expires_at, consumed_at, created_at, updated_at, version FROM person_claims WHERE person_id=${personId} AND status='pending' LIMIT 1`;
+      const rows = await this.sql<ClaimRow[]>`SELECT id, person_id, token_hash, lookup_id, hash_key_version, issued_by_type, issued_by_subject, status, expires_at, consumed_at, created_at, updated_at, version FROM person_claims WHERE person_id=${personId} AND status='pending' LIMIT 1`;
       if (rows[0] === undefined) return { kind: "not_found" };
       const claim = toClaim(rows[0]);
       return claim === null ? { kind: "invalid_persistence_state" } : { kind: "found", claim };
@@ -54,7 +54,7 @@ export class PgPersonClaimRepository implements PersonClaimRepository, ClaimAcco
         if (people.length === 0) return { ok: false, error: { kind: "person_not_found" } } as const;
         const changed = await tx<{ id: string }[]>`UPDATE person_claims SET status='consumed', consumed_at=${consumedAt}, updated_at=${consumed.updatedAt}, version=${consumed.version} WHERE id=${consumed.id} AND person_id=${account.personId} AND status='pending' AND version=${expected} AND expires_at > ${consumedAt} RETURNING id`;
         if (changed.length === 0) {
-          const rows = await tx<ClaimRow[]>`SELECT id, person_id, token_hash, status, expires_at, consumed_at, created_at, updated_at, version FROM person_claims WHERE id=${consumed.id}`;
+          const rows = await tx<ClaimRow[]>`SELECT id, person_id, token_hash, lookup_id, hash_key_version, issued_by_type, issued_by_subject, status, expires_at, consumed_at, created_at, updated_at, version FROM person_claims WHERE id=${consumed.id}`;
           return { ok: false, error: classifyRejected(rows[0], consumedAt) } as const;
         }
         await tx`INSERT INTO accounts (id, auth_subject, person_id, status, version, created_at, updated_at) VALUES (${account.id}, ${account.authSubject}, ${account.personId}, ${account.status}, ${account.version}, ${account.createdAt}, ${account.updatedAt})`;
@@ -65,8 +65,8 @@ export class PgPersonClaimRepository implements PersonClaimRepository, ClaimAcco
 }
 
 function toClaim(row: ClaimRow): PersonClaim | null {
-  if (!(["pending", "consumed", "expired", "revoked"] as string[]).includes(row.status) || !Number.isInteger(row.version) || row.version < 1) return null;
-  return { id: row.id as Id<"PersonClaim">, personId: row.person_id as Id<"Person">, tokenHash: row.token_hash as ClaimTokenHash, status: row.status as PersonClaimStatus, expiresAt: iso(row.expires_at), consumedAt: row.consumed_at === null ? null : iso(row.consumed_at), createdAt: iso(row.created_at), updatedAt: iso(row.updated_at), version: row.version as AggregateVersion };
+  if (!(["pending", "consumed", "expired", "revoked"] as string[]).includes(row.status) || !(["system","admin","onboarding"] as string[]).includes(row.issued_by_type) || !Number.isInteger(row.version) || row.version < 1) return null;
+  return { id:row.id as Id<"PersonClaim">,personId:row.person_id as Id<"Person">,tokenHash:row.token_hash as ClaimTokenHash,lookupId:row.lookup_id as ClaimLookupId,hashKeyVersion:row.hash_key_version as ClaimHashKeyVersion,issuedBy:{type:row.issued_by_type as ClaimIssuerType,subject:row.issued_by_subject},status:row.status as PersonClaimStatus,expiresAt:iso(row.expires_at),consumedAt:row.consumed_at===null?null:iso(row.consumed_at),createdAt:iso(row.created_at),updatedAt:iso(row.updated_at),version:row.version as AggregateVersion };
 }
 function classifyRejected(row: ClaimRow | undefined, at: ISODateString): ClaimAccountLinkError {
   if (row === undefined) return { kind: "claim_not_found" };

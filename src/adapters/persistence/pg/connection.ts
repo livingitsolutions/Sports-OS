@@ -22,9 +22,9 @@ export interface PgConfig {
  * clear error when neither is configured, so production wiring fails loudly
  * instead of silently degrading.
  */
-export function readPgConfigFromEnv(): PgConfig {
+export function readPgConfigFromEnv(env: Record<string,string|undefined> = process.env): PgConfig {
   const connectionString =
-    process.env.DATABASE_URL ?? process.env.SUPABASE_DB_URL ?? "";
+    env.DATABASE_URL ?? env.SUPABASE_DB_URL ?? "";
   if (connectionString.trim().length === 0) {
     throw new Error(
       "Database configuration is missing: set DATABASE_URL (or SUPABASE_DB_URL) " +

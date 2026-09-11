@@ -4,12 +4,23 @@
 
 ## Current version
 
-**SportsOS Architecture v0.6.2 — Sprint 4.2 (Version Ownership Hardening)**
+**SportsOS Architecture v0.8.0 — Sprint 5.2 (Trusted Claim Issuance Runtime)**
 
 - Date: 2026-09-11
-- Sprint: 4.2 (aggregate version ownership and persistence hardening)
+- Sprint: 5.2 (trusted claim issuance and HMAC key rotation)
 - Status: Active
-- Supersedes: v0.6.1 (Sprint 4.1)
+- Supersedes: v0.7.0 (Sprint 5.1)
+
+## What changed in v0.8.0 (Sprint 5.2)
+
+PersonClaim gained immutable lookup, hash-key-version, and minimal trusted
+issuer provenance. The credential is now a bounded `version.lookup.secret`
+bearer value, enabling one indexed lookup and exact-version HMAC verification.
+A provider-neutral keyring contract and production crypto/configuration adapter
+support safe rotation without exposing secrets to Domain or Application. An
+internal production composition boundary requires a validated trusted issuer;
+no public endpoint or role system was added. Migration 0006 adds only the
+required claim persistence and constraints while preserving existing hashes.
 
 ## What changed in v0.6.2 (Sprint 4.2)
 
