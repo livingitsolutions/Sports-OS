@@ -168,6 +168,15 @@ describe.skipIf(!RUN_INTEGRATION)("PostgreSQL persistence integration", () => {
     expect(result.error.kind).toBe("invalid_persistence_state");
   });
 
+  it("reports a missing Person on lookup and save", async () => {
+    const missing = person("missing", "missing-sports");
+    const lookup = await persons.findById(missing.id);
+    expect(lookup.kind).toBe("not_found");
+
+    const save = await persons.save({ ...missing, version: 2 as never }, missing.version);
+    expect(save).toEqual({ ok: false, error: { kind: "not_found" } });
+  });
+
   it("maps a malformed stored Person record to invalid_persistence_state", async () => {
     await sql`INSERT INTO persons (id, display_name, lifecycle_status, version, updated_at)
       VALUES (${key("malformed")}, 'Malformed', 'active', 1, ${NOW})`;
