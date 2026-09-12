@@ -5,5 +5,5 @@ interface Named{readonly name:string;readonly key:string;readonly createdAt:ISOD
 export interface Event extends AggregateRoot<"Event">,Named{readonly organizationId:Id<"Organization">;readonly status:EventStatus;readonly startsAt:ISODateString|null;readonly endsAt:ISODateString|null;}
 export interface Competition extends AggregateRoot<"Competition">,Named{readonly eventId:Id<"Event">;readonly sportId:Id<"Sport">;readonly status:CompetitionStatus;}
 export interface Division extends AggregateRoot<"Division">,Named{readonly competitionId:Id<"Competition">;readonly status:DivisionStatus;}
-export interface Stage extends AggregateRoot<"Stage">,Named{readonly competitionId:Id<"Competition">;readonly divisionId:Id<"Division">|null;readonly sequence:number;readonly status:StageStatus;}
+export interface Stage extends AggregateRoot<"Stage">,Named{readonly competitionId:Id<"Competition">;readonly divisionId:Id<"Division">|null;readonly competitionFormatId?:Id<"CompetitionFormat">|null;readonly sequence:number;readonly status:StageStatus;}
 export interface Contest extends AggregateRoot<"Contest">{readonly stageId:Id<"Stage">;readonly sequence:number;readonly status:ContestStatus;readonly scheduledAt:ISODateString|null;readonly createdAt:ISODateString;readonly updatedAt:ISODateString;readonly version:AggregateVersion;}
