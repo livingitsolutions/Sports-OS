@@ -15,6 +15,7 @@ export { InMemoryPersonRepository } from "@adapters/persistence/in-memory-person
 export { InMemoryOrganizationRepository } from "@adapters/persistence/in-memory-organization-repository";
 export { InMemoryOrganizationMembershipRepository } from "@adapters/persistence/in-memory-organization-membership-repository";
 export { InMemoryOrganizationRoleRepository, InMemoryOrganizationRoleAssignmentRepository } from "@adapters/persistence/in-memory-organization-authorization-repositories";
+export { InMemoryOrganizationTrustRepository } from "@adapters/persistence/in-memory-organization-trust-repository";
 export { InMemoryAthleteProfileRepository } from "@adapters/persistence/in-memory-athlete-profile-repository";
 export { InMemorySportDirectory } from "@adapters/sports/in-memory-sport-directory";
 export { InMemoryEventPublisher } from "@adapters/events/in-memory-event-publisher";
@@ -29,6 +30,7 @@ export { PgPersonRepository } from "@adapters/persistence/pg/pg-person-repositor
 export { PgOrganizationRepository } from "@adapters/persistence/pg/pg-organization-repository";
 export { PgOrganizationMembershipRepository } from "@adapters/persistence/pg/pg-organization-membership-repository";
 export { PgOrganizationRoleRepository, PgOrganizationRoleAssignmentRepository } from "@adapters/persistence/pg/pg-organization-authorization-repositories";
+export { PgOrganizationTrustRepository } from "@adapters/persistence/pg/pg-organization-trust-repository";
 export { PgOrganizationBootstrapRepository } from "@adapters/persistence/pg/pg-organization-bootstrap-repository";
 export { PgAthleteProfileRepository } from "@adapters/persistence/pg/pg-athlete-profile-repository";
 export { PgSportDirectory } from "@adapters/persistence/pg/pg-sport-directory";

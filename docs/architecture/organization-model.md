@@ -1,5 +1,18 @@
 # Organization Model
 
+## Trust and recognition
+
+Existence, administration, and trust are independent. An Organization can
+exist without administrators, can have administrators without recognition,
+and is trusted only through an explicit `OrganizationTrust` issued by another
+Organization. `Organization.type` is descriptive and carries no authority.
+
+Trust is scoped, direct, non-transitive, and cannot target the issuer itself.
+It may expire or be revoked; records remain as history. Sport/geographic
+jurisdiction, federation hierarchy, delegation chains, and root admission are
+not modeled. Establishing the first governing authority requires a future
+platform-governed root-of-trust mechanism. No public issuance boundary exists.
+
 Organization creation and Organization authority are deliberately separate.
 Creation never grants authorization. Initial administration requires an
 explicit trusted, one-time bootstrap transaction and is represented only by
