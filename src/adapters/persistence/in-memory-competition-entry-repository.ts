@@ -13,6 +13,8 @@ const bad = (
 });
 export class InMemoryCompetitionEntryRepository implements CompetitionEntryRepository {
   private readonly entries = new Map<string, CompetitionEntry>();
+  async listActiveForCompetition(c:Id<"Competition">){return{ok:true as const,value:[...this.entries.values()].filter(x=>x.competitionId===c&&x.status==="active")};}
+  async listActiveForDivision(c:Id<"Competition">,d:Id<"Division">){return{ok:true as const,value:[...this.entries.values()].filter(x=>x.competitionId===c&&x.divisionId===d&&x.status==="active")};}
   async countActiveForCompetition(c: Id<"Competition">) { return {ok:true as const,value:[...this.entries.values()].filter(x=>x.competitionId===c&&x.status==="active").length}; }
   async countActiveForDivision(c: Id<"Competition">,d: Id<"Division">) { return {ok:true as const,value:[...this.entries.values()].filter(x=>x.competitionId===c&&x.divisionId===d&&x.status==="active").length}; }
   async create(x: CompetitionEntry) {

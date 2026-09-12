@@ -52,6 +52,8 @@ const lookup = (rows: Row[]): CompetitionEntryLookup =>
     : { kind: "not_found" };
 export class PgCompetitionEntryRepository implements CompetitionEntryRepository {
   constructor(private readonly sql: Sql) {}
+  async listActiveForCompetition(c:Id<"Competition">){try{return{ok:true as const,value:(await this.sql<Row[]>`SELECT * FROM competition_entries WHERE competition_id=${c} AND status='active' ORDER BY id`).map(map)}}catch(e){return failure(e)}}
+  async listActiveForDivision(c:Id<"Competition">,d:Id<"Division">){try{return{ok:true as const,value:(await this.sql<Row[]>`SELECT * FROM competition_entries WHERE competition_id=${c} AND division_id=${d} AND status='active' ORDER BY id`).map(map)}}catch(e){return failure(e)}}
   async countActiveForCompetition(c: Id<"Competition">) { try { const [r]=await this.sql<Row[]>`SELECT count(*)::integer AS count FROM competition_entries WHERE competition_id=${c} AND status='active'`; return {ok:true as const,value:Number(r?.count??0)}; } catch(e) { return failure(e); } }
   async countActiveForDivision(c: Id<"Competition">,d: Id<"Division">) { try { const [r]=await this.sql<Row[]>`SELECT count(*)::integer AS count FROM competition_entries WHERE competition_id=${c} AND division_id=${d} AND status='active'`; return {ok:true as const,value:Number(r?.count??0)}; } catch(e) { return failure(e); } }
   async create(x: CompetitionEntry) {

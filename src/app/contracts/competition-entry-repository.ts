@@ -16,6 +16,8 @@ export type CompetitionEntryLookup =
   | { kind: "not_found" }
   | { kind: "invalid_persistence_state" | "unavailable"; detail?: string };
 export interface CompetitionEntryRepository {
+  listActiveForCompetition(competitionId: Id<"Competition">): Promise<Result<readonly CompetitionEntry[], CompetitionEntryPersistenceError>>;
+  listActiveForDivision(competitionId: Id<"Competition">, divisionId: Id<"Division">): Promise<Result<readonly CompetitionEntry[], CompetitionEntryPersistenceError>>;
   countActiveForCompetition(competitionId: Id<"Competition">): Promise<Result<number, CompetitionEntryPersistenceError>>;
   countActiveForDivision(competitionId: Id<"Competition">, divisionId: Id<"Division">): Promise<Result<number, CompetitionEntryPersistenceError>>;
   create(

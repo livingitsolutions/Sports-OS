@@ -23,6 +23,7 @@ export { InMemoryEventRepository,InMemoryCompetitionRepository,InMemoryDivisionR
 export { InMemoryCompetitionEntryRepository } from "@adapters/persistence/in-memory-competition-entry-repository";
 export { InMemoryCompetitionFormatRepository } from "@adapters/persistence/in-memory-competition-format-repository";
 export { InMemoryCompetitionSeedAssignmentRepository } from "@adapters/persistence/in-memory-competition-seed-assignment-repository";
+export { InMemoryCompetitionSeedFinalizer } from "@adapters/persistence/in-memory-competition-seed-finalizer";
 export { InMemorySportDirectory } from "@adapters/sports/in-memory-sport-directory";
 export { InMemoryEventPublisher } from "@adapters/events/in-memory-event-publisher";
 export { NoopEventPublisher } from "@adapters/events/noop-event-publisher";
@@ -46,6 +47,7 @@ export { PgEventRepository,PgCompetitionRepository,PgDivisionRepository,PgStageR
 export { PgCompetitionEntryRepository } from "@adapters/persistence/pg/pg-competition-entry-repository";
 export { PgCompetitionFormatRepository } from "@adapters/persistence/pg/pg-competition-format-repository";
 export { PgCompetitionSeedAssignmentRepository } from "@adapters/persistence/pg/pg-competition-seed-assignment-repository";
+export { PgCompetitionSeedFinalizer } from "@adapters/persistence/pg/pg-competition-seed-finalizer";
 
 /** Thrown by a port that has no configured adapter in the current composition. */
 export class NotConfiguredError extends Error {

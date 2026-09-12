@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.3 — Sprint 10.1.2 (Seed Assignment)**
+**SportsOS Architecture v1.10.4 — Sprint 10.1.3 (Seed Assignment Finalization)**
 
 - Date: 2026-09-12
-- Sprint: 10.1.2 (CompetitionEntry seed assignment)
+- Sprint: 10.1.3 (seed assignment finalization)
 - Status: Active
-- Supersedes: v1.10.2 (Sprint 10.1.1)
+- Supersedes: v1.10.3 (Sprint 10.1.2)
+
+## What changed in v1.10.4 (Sprint 10.1.3)
+
+Materialized formats now expose an explicit seed-finalization boundary. Finalization requires complete plan-derived seed coverage and exact identity-set equality between assigned entries and the current active scope. The materialization row serializes assignment and finalization, after which the mapping is immutable. This snapshot is not Contest participation; participant resolution remains the next boundary.
 
 ## What changed in v1.10.3 (Sprint 10.1.2)
 

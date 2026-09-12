@@ -30,7 +30,11 @@ Format selection does not imply engine implementation. The catalog describes int
 
 The structural flow is: Entries → determine entrant count → format engine → transient format plan → Stage/Contest generation → seed assignment. Materialization durably records `entrant_count`, freezing the structural assumption; assignment rejects active entrant-count drift rather than rebuilding.
 
-`CompetitionSeedAssignment` maps one active `CompetitionEntry` to one positive structural seed in one materialized `CompetitionFormat`. It copies no athlete or Team identity. Both the seed and entry are unique within a format, partial assignment is valid, and reassignment is not supported. A seed assignment is not Contest participation: it creates no participant or slot and writes no identity to Contest. Results and progression execution remain future boundaries.
+`CompetitionSeedAssignment` maps one active `CompetitionEntry` to one positive structural seed in one materialized `CompetitionFormat`. It copies no athlete or Team identity. Both the seed and entry are unique within a format, and partial manual assignment is valid while seeding remains open.
+
+The flow is `CompetitionEntry → CompetitionSeedAssignment → finalized seed map`. Finalization compares entry identities as exact sets, not merely counts, and separately requires exact coverage of the generic `SeedSource` numbers produced by the validated plan. `entrant_count` alone cannot detect a withdrawn assigned entrant replaced by a different active entrant.
+
+A non-null materialization `seed_finalized_at` freezes the seed map. Later CompetitionEntry lifecycle changes neither mutate this snapshot nor rebuild or unlock the bracket. A finalized seed map is not a `ContestParticipant`: it creates no participant or slot and places no identity into Contest. ContestParticipant resolution is the next boundary; results and progression execution remain future boundaries.
 
 ## Single elimination planning
 
