@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.8.0 — Sprint 8 (Competition Foundation)**
+**SportsOS Architecture v1.9.0 — Sprint 9 (Competition Entry Foundation)**
 
-- Date: 2026-09-16
-- Sprint: 8 (competition foundation)
+- Date: 2026-09-12
+- Sprint: 9 (competition entry foundation)
 - Status: Active
-- Supersedes: v1.7.0 (Sprint 7.1)
+- Supersedes: v1.8.0 (Sprint 8)
+
+## What changed in v1.9.0 (Sprint 9)
+
+CompetitionEntry now durably records an accepted athlete or Team in a Competition, with exact-one identity, sport compatibility, optional same-Competition active Division, historical withdrawal/re-entry, partial active uniqueness, optimistic locking, and organizer-derived authorization. Cross-Organization Team participation is supported. Registration, payments, competition rosters, Contest participants, seeding, brackets, and results remain separate and deferred.
 
 ## What changed in v1.8.0 (Sprint 8)
 
