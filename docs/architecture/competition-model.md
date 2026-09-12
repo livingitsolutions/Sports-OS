@@ -28,7 +28,9 @@ Format selection does not imply engine implementation. The catalog describes int
 
 `CompetitionFormatPlan` is transient. It uses logical stage and contest references, generic contest capacity, and seed, contest-outcome, or stage-standing progression sources. Winner/loser are optional progression semantics and do not make Contest two-sided.
 
-The intended later flow is: Entries → determine entrant count → format engine → transient format plan → Stage/Contest generation → participant assignment → results → progression execution.
+The structural flow is: Entries → determine entrant count → format engine → transient format plan → Stage/Contest generation → seed assignment. Materialization durably records `entrant_count`, freezing the structural assumption; assignment rejects active entrant-count drift rather than rebuilding.
+
+`CompetitionSeedAssignment` maps one active `CompetitionEntry` to one positive structural seed in one materialized `CompetitionFormat`. It copies no athlete or Team identity. Both the seed and entry are unique within a format, partial assignment is valid, and reassignment is not supported. A seed assignment is not Contest participation: it creates no participant or slot and writes no identity to Contest. Results and progression execution remain future boundaries.
 
 ## Single elimination planning
 

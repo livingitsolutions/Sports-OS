@@ -1,0 +1,5 @@
+import { INITIAL_AGGREGATE_VERSION } from "@domain/aggregate";
+import type { AggregateRoot } from "@domain/aggregate";
+import type { Id,ISODateString,Result } from "@shared/kernel";
+export interface CompetitionSeedAssignment extends AggregateRoot<"CompetitionSeedAssignment"> {readonly competitionFormatId:Id<"CompetitionFormat">;readonly competitionEntryId:Id<"CompetitionEntry">;readonly seedNumber:number;readonly createdAt:ISODateString;}
+export function createCompetitionSeedAssignment(i:{id:Id<"CompetitionSeedAssignment">;competitionFormatId:Id<"CompetitionFormat">;competitionEntryId:Id<"CompetitionEntry">;seedNumber:number;now:ISODateString}):Result<CompetitionSeedAssignment>{if(!i.id.trim()||!i.competitionFormatId.trim()||!i.competitionEntryId.trim()||!Number.isInteger(i.seedNumber)||i.seedNumber<1)return{ok:false,error:{code:"invalid_seed_assignment",message:"Assignment identifiers and a positive integer seed are required."}};return{ok:true,value:{id:i.id,competitionFormatId:i.competitionFormatId,competitionEntryId:i.competitionEntryId,seedNumber:i.seedNumber,createdAt:i.now,version:INITIAL_AGGREGATE_VERSION}};}
