@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.0 — Sprint 10 (Competition Format Foundation)**
+**SportsOS Architecture v1.10.1 — Sprint 10.1 (Single Elimination Engine)**
 
 - Date: 2026-09-12
-- Sprint: 10 (competition format foundation)
+- Sprint: 10.1 (single elimination engine)
 - Status: Active
-- Supersedes: v1.9.0 (Sprint 9)
+- Supersedes: v1.10.0 (Sprint 10)
+
+## What changed in v1.10.1 (Sprint 10.1)
+
+The first concrete format engine now generates pure, deterministic single-elimination structure from entrant count. It balances standard seed positions, represents top-seed byes as direct seed sources into later contests, and emits only contests requiring sporting results. The plan remains transient and identity-neutral; no Stage, Contest, participant, result, progression, or champion state is persisted or executed.
 
 ## What changed in v1.10.0 (Sprint 10)
 
