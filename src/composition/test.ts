@@ -13,6 +13,9 @@ import { DeactivatePerson } from "@app/use-cases/deactivate-person";
 import type { AppContainer } from "@composition/container";
 import { InMemoryOrganizationRepository } from "@adapters/persistence/in-memory-organization-repository";
 import { CreateOrganization } from "@app/use-cases/create-organization";
+import { InMemoryOrganizationMembershipRepository } from "@adapters/persistence/in-memory-organization-membership-repository";
+import { CreateOrganizationMembership } from "@app/use-cases/create-organization-membership";
+import { DeactivateOrganizationMembership, ReactivateOrganizationMembership } from "@app/use-cases/change-organization-membership-status";
 
 /**
  * Test composition root. Wires deterministic capability adapters so use-case
@@ -27,6 +30,12 @@ export interface TestContainer extends AppContainer {
   readonly sportsIdGenerator: FakeSportsIdGenerator;
   readonly personRepository: InMemoryPersonRepository;
   readonly organizationRepository: InMemoryOrganizationRepository;
+  readonly organizationMembershipRepository: InMemoryOrganizationMembershipRepository;
+  readonly membershipUseCases: {
+    readonly create: CreateOrganizationMembership;
+    readonly deactivate: DeactivateOrganizationMembership;
+    readonly reactivate: ReactivateOrganizationMembership;
+  };
   readonly athleteProfileRepository: InMemoryAthleteProfileRepository;
   readonly sportDirectory: InMemorySportDirectory;
   readonly domainEvents: InMemoryEventPublisher<DomainEvent>;
@@ -39,6 +48,7 @@ export function createTestContainer(): TestContainer {
   const sportsIdGenerator = new FakeSportsIdGenerator();
   const personRepository = new InMemoryPersonRepository();
   const organizationRepository = new InMemoryOrganizationRepository();
+  const organizationMembershipRepository = new InMemoryOrganizationMembershipRepository();
   const athleteProfileRepository = new InMemoryAthleteProfileRepository();
   const sportDirectory = new InMemorySportDirectory();
   const domainEvents = new InMemoryEventPublisher<DomainEvent>();
@@ -50,6 +60,12 @@ export function createTestContainer(): TestContainer {
     sportsIdGenerator,
     personRepository,
     organizationRepository,
+    organizationMembershipRepository,
+    membershipUseCases: {
+      create: new CreateOrganizationMembership({ clock, idGenerator, membershipRepository: organizationMembershipRepository, personRepository, organizationRepository, domainEvents }),
+      deactivate: new DeactivateOrganizationMembership({ clock, idGenerator, membershipRepository: organizationMembershipRepository, domainEvents }),
+      reactivate: new ReactivateOrganizationMembership({ clock, idGenerator, membershipRepository: organizationMembershipRepository, domainEvents }),
+    },
     athleteProfileRepository,
     sportDirectory,
     domainEvents,
