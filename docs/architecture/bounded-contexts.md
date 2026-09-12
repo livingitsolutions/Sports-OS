@@ -82,7 +82,7 @@ ADR-010.
 ### 4. Organizations & Tenancy
 
 **Owns:** `Tenant`, `Organization`, `Team`.
-**Ownership classification [C]:** Organization/tenant-owned.
+**Ownership classification [C]:** Organization is a platform organizational identity without `tenantId`.
 **Responsibility:** the isolation boundary (Tenant) and the structured bodies
 (clubs, schools, associations, LGUs, governing bodies, sponsors, venue
 operators). Teams are competing units that belong to organizations. See
@@ -177,7 +177,7 @@ here. See `identity-model.md`, `sports-model.md`, ADR-019,
 | EventAssignment | Auth | Event-scoped | Yes |
 | GuardianRelationship | Auth | Person-owned | No |
 | Sport, Discipline | Sports Catalog | Reference data | No |
-| Tenant, Organization, Team | Orgs & Tenancy | Organization/tenant-owned | Yes |
+| Organization | Orgs & Tenancy | Platform organizational identity | No |
 | CompetitionEvent | Competition | Event-scoped | Yes |
 | Competition, Division, Stage, Contest | Competition | Event-scoped | Yes |
 | Registration | Registration | Event-scoped | Yes |

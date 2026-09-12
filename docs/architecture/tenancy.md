@@ -14,7 +14,7 @@ and event-scoped entities carry `tenantId`.
 | **Platform-global** | Platform-level identity and configuration. Exists outside any tenant. | No | `Person`, `SportsId` |
 | **Reference data** | Canonical catalog data shared across all tenants. | No | `Sport`, `Discipline` |
 | **Person-owned** | Created by/for a Person, belonging to that person across contexts. | No | `AthleteProfile`, `IdentityVerification`, `QrCredential` (permanent) |
-| **Organization/tenant-owned** | Belongs to an Organization within a Tenant. | Yes | `Organization`, `Team`, `OrganizationMembership`, `OrganizationRoleAssignment` |
+| **Organization-owned** | Belongs to an Organization; a future capability may isolate it by `organizationId`. | No `tenantId` | Future organization-owned resources |
 | **Event-scoped** | Tied to a specific event/competition within a tenant. | Yes | `CompetitionEvent`, `Competition`, `Division`, `Stage`, `Contest`, `Registration`, `EventAssignment`, `TeamMembership` |
 | **Historical/audit** | Immutable historical records. Retained per retention policy, not deleted. | Yes (origin tenant) | `CompetitionResult`, `Achievement`, `PaymentTransaction`, `Refund`, `Settlement`, `RewardsLedgerEntry` |
 

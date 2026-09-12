@@ -1,28 +1,28 @@
-import type { Id } from "@shared/kernel";
+import type { AggregateVersion } from "@domain/aggregate";
+import type { Id, ISODateString } from "@shared/kernel";
 
 /**
  * Organization — any structured body that owns or governs sport activity:
  * clubs, schools, associations, LGUs, governing bodies, sponsors (as
  * commercial orgs), venue operators. Discriminated by `kind`.
  *
- * Ownership: organization/tenant-owned. An Organization belongs to a Tenant.
- * See docs/architecture/organization-model.md, tenancy.md, ADR-004, ADR-010.
+ * Platform organizational identity. It has no tenantId and can exist before
+ * users, teams, or events.
  */
-export type OrganizationKind =
-  | "club"
-  | "school"
-  | "association"
-  | "lgu"
-  | "governing_body"
-  | "sponsor"
-  | "venue_operator";
+export const ORGANIZATION_TYPES = ["club", "league", "association", "federation", "school", "government_body", "company", "event_organizer", "venue_operator", "other"] as const;
+export type OrganizationType = (typeof ORGANIZATION_TYPES)[number];
+export type OrganizationStatus = "active" | "inactive";
 
 export interface Organization {
   readonly id: Id<"Organization">;
-  readonly tenantId: Id<"Tenant">;
-  readonly kind: OrganizationKind;
-  readonly legalName: string;
-  readonly parentId: Id<"Organization"> | null;
+  readonly name: string;
+  readonly slug: string;
+  readonly type: OrganizationType;
+  readonly status: OrganizationStatus;
+  readonly countryCode: string;
+  readonly createdAt: ISODateString;
+  readonly updatedAt: ISODateString;
+  readonly version: AggregateVersion;
 }
 
 /**

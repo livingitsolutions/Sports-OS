@@ -12,6 +12,8 @@ import type { CreatePerson } from "@app/use-cases/create-person";
 import type { CreateAthleteProfile } from "@app/use-cases/create-athlete-profile";
 import type { AddAthleteSport } from "@app/use-cases/add-athlete-sport";
 import type { DeactivatePerson } from "@app/use-cases/deactivate-person";
+import type { OrganizationRepository } from "@app/contracts/organization-repository";
+import type { CreateOrganization } from "@app/use-cases/create-organization";
 
 /**
  * The set of application capabilities and use cases wired at startup. This is
@@ -24,6 +26,7 @@ export interface AppContainer {
   readonly idGenerator: IdGenerator;
   readonly sportsIdGenerator: SportsIdGenerator;
   readonly personRepository: PersonRepository;
+  readonly organizationRepository: OrganizationRepository;
   readonly athleteProfileRepository: AthleteProfileRepository;
   readonly sportDirectory: SportDirectory;
   readonly domainEvents: DomainEventPublisher;
@@ -36,4 +39,5 @@ export interface AppUseCases {
   readonly createAthleteProfile: CreateAthleteProfile;
   readonly addAthleteSport: AddAthleteSport;
   readonly deactivatePerson: DeactivatePerson;
+  readonly createOrganization: CreateOrganization;
 }
