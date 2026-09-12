@@ -29,3 +29,15 @@ Format selection does not imply engine implementation. The catalog describes int
 `CompetitionFormatPlan` is transient. It uses logical stage and contest references, generic contest capacity, and seed, contest-outcome, or stage-standing progression sources. Winner/loser are optional progression semantics and do not make Contest two-sided.
 
 The intended later flow is: Entries → determine entrant count → format engine → transient format plan → Stage/Contest generation → participant assignment → results → progression execution.
+
+## Single elimination planning
+
+`SingleEliminationEngine` is the sole concrete engine in v1.10.1. It accepts an integer entrant count of at least two and selects the smallest power-of-two bracket at least that large. Thus `bracketSize = 2^ceil(log2(entrantCount))`, `byeCount = bracketSize - entrantCount`, and the number of elimination rounds is `log2(bracketSize)`.
+
+Seed placement is deterministic and balanced. Beginning with `[1, 2]`, each bracket doubling to size `S` replaces every existing seed `s` with `[s, S + 1 - s]`; adjacent values are opening-round opponents. This conventional mirror-complement layout keeps seeds 1 and 2 in opposite halves and, from an eight-slot bracket onward, seeds 1–4 in separate quarter regions.
+
+Slots above the entrant count are absences, not participants. Pairing an actual seed with an absent slot gives the seed a bye: its `SeedSource` feeds the appropriate position of the next real Contest directly. No one-participant Contest, fake entry, completed Contest, opponent, outcome, or progression from a nonexistent Contest is produced. Consequently the plan always contains exactly `entrantCount - 1` playable, capacity-two Contests.
+
+There is one planned Stage for every bracket round, increasing toward `stage:final`. Every Contest position has exactly one source: either one structural seed or the winner of one earlier Contest. Every non-final winner feeds exactly one later position, loser progressions are absent, and the Final has no outgoing rule. The Final is only the graph endpoint; it does not identify or persist a champion.
+
+Planning uses stable logical references and contains no AthleteProfile, Team, CompetitionEntry, name, database ID, time, or random value. The registry composition registers only `single_elimination`; other catalog kinds remain typed `unsupported_format`. The engine neither reads nor writes persistence, and plan materialization, entrant assignment, result interpretation, and progression execution remain future orchestration boundaries.
