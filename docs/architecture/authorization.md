@@ -14,8 +14,10 @@ is one-time per Organization: replay for the same Person is idempotent, while a
 different Person is rejected. The system role has exactly the current six
 Organization permissions; its key has no special meaning to the authorization
 evaluator. It is not a platform-global administrator. No HTTP, RPC, Data API,
-or presentation boundary exposes bootstrap; selecting who may invoke it remains
-deferred to a future trusted onboarding policy.
+or presentation boundary exposes bootstrap. It is composed only through the
+trusted `OnboardOrganization` boundary, whose opaque capability authorizes this
+operation alone rather than platform-global administration. Governing-body
+verification remains separate.
 
 > Permission-based authorization derived from scoped memberships and
 > assignments, not hard-coded role checks. See R15, R1, R25, R26,
