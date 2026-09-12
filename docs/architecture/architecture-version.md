@@ -4,12 +4,26 @@
 
 ## Current version
 
-**SportsOS Architecture v0.9.0 — Sprint 5.3 (Authenticated Account-Link Boundary)**
+**SportsOS Architecture v1.2.0 — Sprint 6.2 (Organization Authorization Foundation)**
 
-- Date: 2026-09-11
-- Sprint: 5.3 (authenticated account-link server boundary)
+- Date: 2026-09-12
+- Sprint: 6.2 (organization authorization foundation)
 - Status: Active
-- Supersedes: v0.8.0 (Sprint 5.2)
+- Supersedes: v1.1.0 (Sprint 6.1)
+
+## What changed in v1.2.0 (Sprint 6.2)
+
+Organization-scoped roles now group a closed permission set, while assignments
+attach roles to memberships with database-enforced organization consistency.
+Authorization explicitly evaluates active membership, assignment, role, and
+permission and defaults to deny. Bootstrap and public administration remain deferred.
+
+## What changed in v1.1.0 (Sprint 6.1)
+
+OrganizationMembership now provides the durable, organization-scoped relationship
+between platform-global Person and Organization roots. It has active/inactive
+lifecycle transitions, optimistic concurrency, pair uniqueness, server-authoritative
+PostgreSQL persistence with RLS and no client policies, and no authorization meaning.
 
 ## What changed in v0.9.0 (Sprint 5.3)
 
