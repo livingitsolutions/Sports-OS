@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.7.0 — Sprint 7.1 (Team Roster Foundation)**
+**SportsOS Architecture v1.8.0 — Sprint 8 (Competition Foundation)**
 
 - Date: 2026-09-16
-- Sprint: 7.1 (Team roster foundation)
+- Sprint: 8 (competition foundation)
 - Status: Active
-- Supersedes: v1.6.0 (Sprint 7)
+- Supersedes: v1.7.0 (Sprint 7.1)
+
+## What changed in v1.8.0 (Sprint 8)
+
+Event, Competition, Division, Stage, and Contest became durable independent roots with Organization-derived authorization, neutral lifecycles, scoped uniqueness, PostgreSQL consistency, and no participant, bracket, or result semantics.
 
 ## What changed in v1.7.0 (Sprint 7.1)
 
