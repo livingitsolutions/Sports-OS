@@ -113,6 +113,21 @@ describe.skipIf(!RUN)("PostgreSQL Organization bootstrap", () => {
       value: { established: true, membershipVersion: 2, assignmentVersion: 2 },
     });
   });
+  it("rejects duplicate Organization-local keys while allowing distinct system-role keys", async () => {
+    await clear();
+    await sql`INSERT INTO organization_roles(id,organization_id,name,key,role_kind,permissions,status,version,created_at,updated_at) VALUES(${`${P}-r-admin`},${org},'Organization Administrator','organization-admin','system',${sql.array([...ORGANIZATION_PERMISSIONS])},'active',1,${NOW},${NOW})`;
+    await expect(
+      sql`INSERT INTO organization_roles(id,organization_id,name,key,role_kind,permissions,status,version,created_at,updated_at) VALUES(${`${P}-r-admin-duplicate`},${org},'Duplicate Organization Administrator','organization-admin','system',${sql.array([...ORGANIZATION_PERMISSIONS])},'active',1,${NOW},${NOW})`,
+    ).rejects.toMatchObject({ code: "23505" });
+    await expect(
+      sql`INSERT INTO organization_roles(id,organization_id,name,key,role_kind,permissions,status,version,created_at,updated_at) VALUES(${`${P}-r-auditor`},${org},'Organization Auditor','organization-auditor','system',${sql.array(["organization.read"])},'active',1,${NOW},${NOW})`,
+    ).resolves.toBeDefined();
+    const roles = await sql<{ key: string }[]>`SELECT key FROM organization_roles WHERE organization_id=${org} AND role_kind='system' ORDER BY key`;
+    expect(roles).toEqual([
+      { key: "organization-admin" },
+      { key: "organization-auditor" },
+    ]);
+  });
   it("serializes same- and different-Person races to one graph and one winner", async () => {
     await clear();
     const same = await Promise.all([
@@ -130,9 +145,9 @@ describe.skipIf(!RUN)("PostgreSQL Organization bootstrap", () => {
       error: { kind: "bootstrap_already_established" },
     });
     const rows = await sql<
-      { count: number }[]
-    >`SELECT count(*)::int count FROM organization_role_assignments WHERE organization_id=${org}`;
-    expect(rows[0]!.count).toBe(1);
+      { roles: number; assignments: number }[]
+    >`SELECT (SELECT count(*)::int FROM organization_roles WHERE organization_id=${org} AND key='organization-admin') roles,(SELECT count(*)::int FROM organization_role_assignments WHERE organization_id=${org}) assignments`;
+    expect(rows[0]).toEqual({ roles: 1, assignments: 1 });
   });
   it("rolls back membership and role when assignment persistence fails", async () => {
     await clear();
