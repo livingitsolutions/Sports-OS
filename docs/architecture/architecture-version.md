@@ -17,11 +17,15 @@ Organization existence, administration, and trust are explicitly separate.
 Trust is scoped, direct, non-transitive, and issued to a different Organization;
 `Organization.type` conveys no trust. Grants expire or revoke without deleting
 history. Issuance and revocation require an active issuer membership with the
-explicit `organization.trust.manage` permission. Issuing sanctioning or
-governing authority additionally requires direct effective incoming governing
-authority. No public issuance boundary exists. A future platform-governed
-mechanism must establish the first root authority. Event delivery remains
-post-persistence and best-effort without an outbox.
+explicit `organization.trust.manage` permission. Organizer verification needs
+no trust prerequisite. Competition sanctioning additionally requires an
+effective direct incoming `governing.authority` grant. The normal Organization
+trust-management flow cannot issue `governing.authority`: direct recognition as
+a governing authority is not recursive delegation authority, regardless of
+Organization type, role, or incoming trust. A future separate platform/root
+admission capability must establish those relationships; no root or super-admin
+bypass is implemented. Trust evaluation remains direct and non-transitive.
+Event delivery remains post-persistence and best-effort without an outbox.
 
 ## What changed in v1.4.0 (Sprint 6.4)
 

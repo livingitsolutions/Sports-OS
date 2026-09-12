@@ -8,10 +8,19 @@ and is trusted only through an explicit `OrganizationTrust` issued by another
 Organization. `Organization.type` is descriptive and carries no authority.
 
 Trust is scoped, direct, non-transitive, and cannot target the issuer itself.
-It may expire or be revoked; records remain as history. Sport/geographic
-jurisdiction, federation hierarchy, delegation chains, and root admission are
-not modeled. Establishing the first governing authority requires a future
-platform-governed root-of-trust mechanism. No public issuance boundary exists.
+It may expire or be revoked; records remain as history. A direct
+`governing.authority` edge recognizes its subject as a governing authority, but
+does not delegate the power to mint another `governing.authority` edge. The
+generic Organization trust-management flow cannot create that scope, and no
+Organization type, role, or incoming trust edge bypasses the prohibition.
+Future platform/root admission must establish governing-authority relationships
+through a separate trusted capability and boundary; no platform root or
+super-admin bypass exists today. Existing issuer-owned grants remain revocable
+through normal trust management. A directly recognized governing authority may
+issue `competition.sanctioning` only when its actor also has
+`organization.trust.manage`. Evaluation stays direct, with no graph traversal.
+Sport/geographic jurisdiction, federation hierarchy, delegation chains, and
+root admission are not modeled. No public issuance boundary exists.
 
 Organization creation and Organization authority are deliberately separate.
 Creation never grants authorization. Initial administration requires an
