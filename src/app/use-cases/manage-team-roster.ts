@@ -1,0 +1,28 @@
+import type { AthleteProfileRepository, Clock, DomainEventPublisher, IdGenerator, TeamRepository, TeamRosterMembershipRepository } from "@app/contracts";
+import type { AuthorizeOrganizationPermission } from "@app/use-cases/authorize-organization-permission";
+import { createTeamRosterMembership, leaveTeamRosterMembership } from "@domain/team/team-roster-membership";
+import type { TeamRosterMembership } from "@domain/team/team-roster-membership.types";
+import type { Id, Result } from "@shared/kernel";
+
+export interface TeamRosterError { kind: "invalid_input" | "team_not_found" | "team_inactive" | "athlete_profile_not_found" | "athlete_not_active_in_team_sport" | "forbidden" | "already_active" | "roster_membership_not_found" | "roster_membership_inactive" | "concurrency_conflict" | "persistence_unavailable"; code: string; message: string; }
+type Shared = { rosterRepository: TeamRosterMembershipRepository; teamRepository: TeamRepository; authorization: AuthorizeOrganizationPermission; clock: Clock; idGenerator: IdGenerator; domainEvents: DomainEventPublisher };
+export class AddAthleteToTeamRoster {
+  constructor(private d: Shared & { athleteProfileRepository: AthleteProfileRepository }) {}
+  async execute(input: { actingMembershipId: string; teamId: string; athleteProfileId: string }): Promise<Result<{ membership: TeamRosterMembership }, TeamRosterError>> {
+    const teamId=input.teamId.trim() as Id<"Team">, athleteId=input.athleteProfileId.trim() as Id<"AthleteProfile">, acting=input.actingMembershipId.trim(); if(!teamId||!athleteId||!acting)return fail("invalid_input","Acting membership, Team, and AthleteProfile are required.");
+    const tf=await this.d.teamRepository.findById(teamId); if(tf.kind==="not_found")return fail("team_not_found","Team does not exist."); if(tf.kind!=="found")return fail("persistence_unavailable","Team lookup failed."); if(tf.team.status!=="active")return fail("team_inactive","Only active Teams accept roster members.");
+    const auth=await this.d.authorization.execute({organizationId:tf.team.organizationId,membershipId:acting,permission:"organization.teams.manage"}); if(!auth.ok)return fail("persistence_unavailable",auth.error.message); if(!auth.value.allowed)return fail("forbidden","Roster management is not permitted.");
+    let athlete; try{athlete=await this.d.athleteProfileRepository.findById(athleteId);}catch{return fail("persistence_unavailable","AthleteProfile lookup failed.");} if(!athlete)return fail("athlete_profile_not_found","AthleteProfile does not exist.");
+    let participation; try{participation=await this.d.athleteProfileRepository.findActiveParticipation(athleteId,tf.team.sportId);}catch{return fail("persistence_unavailable","Sport participation lookup failed.");} if(!participation)return fail("athlete_not_active_in_team_sport","Athlete is not active in the Team's sport.");
+    const existing=await this.d.rosterRepository.findActiveByTeamAndAthlete(teamId,athleteId); if(existing.kind==="found")return fail("already_active","Athlete already has an active membership on this Team."); if(existing.kind!=="not_found")return fail("persistence_unavailable","Roster lookup failed.");
+    const made=createTeamRosterMembership({rosterMembershipId:this.d.idGenerator.next("TeamRosterMembership") as Id<"TeamRosterMembership">,teamId,athleteProfileId:athleteId,now:this.d.clock.now(),eventId:this.d.idGenerator.next("DomainEvent")}); if(!made.ok)return fail("invalid_input",made.error.message);
+    const saved=await this.d.rosterRepository.create(made.value.membership); if(!saved.ok)return fail(saved.error.kind==="already_active"?"already_active":"persistence_unavailable","Roster membership creation failed."); await this.d.domainEvents.publish(made.value.event); return {ok:true,value:{membership:saved.value}};
+  }
+}
+export class RemoveAthleteFromTeamRoster {
+  constructor(private d: Shared) {}
+  async execute(input:{actingMembershipId:string;teamRosterMembershipId:string}):Promise<Result<{membership:TeamRosterMembership},TeamRosterError>>{
+    const id=input.teamRosterMembershipId.trim() as Id<"TeamRosterMembership">,acting=input.actingMembershipId.trim();if(!id||!acting)return fail("invalid_input","Acting membership and roster membership are required."); const found=await this.d.rosterRepository.findById(id);if(found.kind==="not_found")return fail("roster_membership_not_found","Roster membership does not exist.");if(found.kind!=="found")return fail("persistence_unavailable","Roster lookup failed."); const tf=await this.d.teamRepository.findById(found.membership.teamId);if(tf.kind==="not_found")return fail("team_not_found","Team does not exist.");if(tf.kind!=="found")return fail("persistence_unavailable","Team lookup failed."); const auth=await this.d.authorization.execute({organizationId:tf.team.organizationId,membershipId:acting,permission:"organization.teams.manage"});if(!auth.ok)return fail("persistence_unavailable",auth.error.message);if(!auth.value.allowed)return fail("forbidden","Roster management is not permitted."); const changed=leaveTeamRosterMembership(found.membership,{now:this.d.clock.now(),eventId:this.d.idGenerator.next("DomainEvent")});if(!changed.ok)return fail("roster_membership_inactive",changed.error.message);const saved=await this.d.rosterRepository.save(changed.value.membership,found.membership.version);if(!saved.ok)return fail(saved.error.kind==="concurrency_conflict"?"concurrency_conflict":"persistence_unavailable","Roster membership update failed.");await this.d.domainEvents.publish(changed.value.event);return {ok:true,value:{membership:saved.value}};
+  }
+}
+function fail(kind:TeamRosterError["kind"],message:string):Result<never,TeamRosterError>{return {ok:false,error:{kind,code:kind,message}};}

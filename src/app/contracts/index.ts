@@ -23,6 +23,7 @@ export type {
 } from "@app/contracts/athlete-profile-repository";
 export type { SportDirectory } from "@app/contracts/sport-directory";
 export type { TeamRepository, TeamPersistenceError, TeamLookup } from "@app/contracts/team-repository";
+export type { TeamRosterMembershipRepository, TeamRosterMembershipPersistenceError, TeamRosterMembershipLookup } from "@app/contracts/team-roster-membership-repository";
 export type { OrganizationRepository, OrganizationLookupResult, OrganizationPersistenceError } from "@app/contracts/organization-repository";
 export type { OrganizationMembershipRepository, OrganizationMembershipLookupResult, OrganizationMembershipPersistenceError } from "@app/contracts/organization-membership-repository";
 export type { OrganizationRoleRepository, OrganizationRoleAssignmentRepository, AuthorizationPersistenceError, RoleLookup, AssignmentLookup } from "@app/contracts/organization-authorization-repositories";
