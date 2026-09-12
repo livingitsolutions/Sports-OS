@@ -8,6 +8,8 @@ export type { AccountRepository, AccountLookupResult, AccountPersistenceError } 
 export type { ClaimTokenGenerator, ClaimHashKeyProvider, ClaimHashResult, ClaimTokenParts, RawClaimToken, RawClaimSecret } from "@app/contracts/claim-token";
 export type { TrustedClaimIssuer, ClaimIssuancePrincipalProvider } from "@app/contracts/trusted-claim-issuer";
 export type { TrustedOrganizationBootstrapper, BootstrapPrincipalType, OrganizationBootstrapPrincipalValidator } from "@app/contracts/trusted-organization-bootstrapper";
+export type { TrustedOrganizationOnboarder, OnboardingPrincipalType, OrganizationOnboardingPrincipalValidator } from "@app/contracts/trusted-organization-onboarder";
+export type { OrganizationOnboardingRepository, OrganizationOnboardingCommand, OrganizationOnboardingResult, OrganizationOnboardingPersistenceError } from "@app/contracts/organization-onboarding-repository";
 export type { OrganizationBootstrapRepository, OrganizationBootstrapCommand, OrganizationBootstrapGraph, OrganizationBootstrapPersistenceError } from "@app/contracts/organization-bootstrap-repository";
 export type { PersonClaimRepository, PersonClaimLookupResult, PersonClaimPersistenceError, ClaimAccountLinkRepository, ClaimAccountLinkError } from "@app/contracts/person-claim-repository";
 export type {

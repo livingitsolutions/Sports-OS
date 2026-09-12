@@ -4,12 +4,23 @@
 
 ## Current version
 
-**SportsOS Architecture v1.3.0 — Sprint 6.3 (Organization Bootstrap Boundary)**
+**SportsOS Architecture v1.4.0 — Sprint 6.4 (Trusted Organization Onboarding Boundary)**
 
-- Date: 2026-09-13
-- Sprint: 6.3 (organization bootstrap / administrative boundary)
+- Date: 2026-09-14
+- Sprint: 6.4 (trusted organization onboarding orchestration)
 - Status: Active
-- Supersedes: v1.2.0 (Sprint 6.2)
+- Supersedes: v1.3.0 (Sprint 6.3)
+
+## What changed in v1.4.0 (Sprint 6.4)
+
+A narrow internal `OnboardOrganization` boundary now creates an Organization
+and establishes its first administrator atomically by reusing the Sprint 6.3
+bootstrap policy. An opaque composition-issued capability authorizes only this
+operation. Stable request identity provides safe replay, global slug uniqueness
+remains authoritative under concurrency, and failed bootstrap rolls back the
+new Organization. No owner, public signup, invitation, governing verification,
+or platform-global administrator was introduced. The completion event is
+post-commit; without an outbox, delivery after commit is not guaranteed.
 
 ## What changed in v1.3.0 (Sprint 6.3)
 

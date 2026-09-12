@@ -7,8 +7,9 @@ const KEY="organization-admin",NAME="Organization Administrator",PERMISSIONS=[..
 interface Role{id:string;role_kind:string;permissions:string[];status:string;version:number;}interface Member{id:string;person_id:string;status:string;version:number;}interface Assignment{id:string;status:string;version:number;}
 export class PgOrganizationBootstrapRepository implements OrganizationBootstrapRepository{
   constructor(private sql:Sql){}
-  async bootstrap(c:OrganizationBootstrapCommand):Promise<Result<OrganizationBootstrapGraph,OrganizationBootstrapPersistenceError>>{try{return await this.sql.begin(async raw=>this.run(raw as unknown as Sql,c));}catch(error){const info=pgErrorInfo(error);return fail(info?.code==="40001"||info?.code==="40P01"?"concurrency_conflict":"unavailable",neutralDetail(error));}}
-  private async run(tx:Sql,c:OrganizationBootstrapCommand):Promise<Result<OrganizationBootstrapGraph,OrganizationBootstrapPersistenceError>>{
+  async bootstrap(c:OrganizationBootstrapCommand):Promise<Result<OrganizationBootstrapGraph,OrganizationBootstrapPersistenceError>>{try{return await this.sql.begin(async raw=>{const result=await executeOrganizationBootstrap(raw as unknown as Sql,c);if(!result.ok)throw new BootstrapRollback(result.error);return result;});}catch(error){if(error instanceof BootstrapRollback)return fail(error.cause.kind,error.cause.detail);const info=pgErrorInfo(error);return fail(info?.code==="40001"||info?.code==="40P01"?"concurrency_conflict":"unavailable",neutralDetail(error));}}
+}
+export async function executeOrganizationBootstrap(tx:Sql,c:OrganizationBootstrapCommand):Promise<Result<OrganizationBootstrapGraph,OrganizationBootstrapPersistenceError>>{
     const org=await tx<{id:string}[]>`SELECT id FROM organizations WHERE id=${c.organizationId} FOR UPDATE`;if(!org[0])return fail("organization_not_found");
     const person=await tx<{id:string}[]>`SELECT id FROM persons WHERE id=${c.personId}`;if(!person[0])return fail("person_not_found");
     const roleRows=await tx<Role[]>`SELECT id,role_kind,permissions,status,version FROM organization_roles WHERE organization_id=${c.organizationId} AND key=${KEY}`;let role=roleRows[0];
@@ -25,7 +26,7 @@ export class PgOrganizationBootstrapRepository implements OrganizationBootstrapR
     else if(assignment.status==="inactive"){[assignment]=await tx<Assignment[]>`UPDATE organization_role_assignments SET status='active',version=version+1,updated_at=${c.now} WHERE id=${assignment.id} RETURNING id,status,version`;}
     else if(assignment.status!=="active")return fail("invalid_persistence_state");
     return {ok:true,value:{membershipId:member!.id as Id<"OrganizationMembership">,roleId:role!.id as Id<"OrganizationRole">,assignmentId:assignment!.id as Id<"OrganizationRoleAssignment">,membershipVersion:member!.version,roleVersion:role!.version,assignmentVersion:assignment!.version,established:true}};
-  }
 }
+class BootstrapRollback extends Error{constructor(readonly cause:OrganizationBootstrapPersistenceError){super(cause.kind);}}
 function validRole(r:Role){return r.role_kind==="system"&&r.status==="active"&&r.permissions.length===PERMISSIONS.length&&[...r.permissions].sort().every((p,i)=>p===PERMISSIONS[i]);}
 function fail(kind:OrganizationBootstrapPersistenceError["kind"],detail?:string):Result<never,OrganizationBootstrapPersistenceError>{return {ok:false,error:{kind,...(detail?{detail}:{})}};}
