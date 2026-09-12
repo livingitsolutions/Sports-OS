@@ -52,3 +52,5 @@ export class NotConfiguredError extends Error {
     this.name = "NotConfiguredError";
   }
 }
+export { InMemoryCompetitionStructureMaterializer } from "@adapters/persistence/in-memory-competition-structure-materializer";
+export { PgCompetitionStructureMaterializer } from "@adapters/persistence/pg/pg-competition-structure-materializer";

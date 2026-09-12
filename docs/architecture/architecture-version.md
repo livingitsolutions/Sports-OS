@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.1 — Sprint 10.1 (Single Elimination Engine)**
+**SportsOS Architecture v1.10.2 — Sprint 10.1.1 (Format Plan Materialization)**
 
 - Date: 2026-09-12
-- Sprint: 10.1 (single elimination engine)
+- Sprint: 10.1.1 (format plan materialization)
 - Status: Active
-- Supersedes: v1.10.0 (Sprint 10)
+- Supersedes: v1.10.1 (Sprint 10.1)
+
+## What changed in v1.10.2 (Sprint 10.1.1)
+
+An internal orchestrator converts validated pure format plans into independent Stage and Contest aggregates. Generated Stages retain nullable source-format linkage, and a PostgreSQL claim makes the complete write atomic and concurrency-safe. Progression remains transient and manual structure remains supported.
 
 ## What changed in v1.10.1 (Sprint 10.1)
 
