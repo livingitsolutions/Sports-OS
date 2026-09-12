@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.6.0 — Sprint 7 (Team Foundation)**
+**SportsOS Architecture v1.7.0 — Sprint 7.1 (Team Roster Foundation)**
 
 - Date: 2026-09-16
-- Sprint: 7 (Team foundation)
+- Sprint: 7.1 (Team roster foundation)
 - Status: Active
-- Supersedes: v1.5.0 (Sprint 6.5)
+- Supersedes: v1.6.0 (Sprint 7)
+
+## What changed in v1.7.0 (Sprint 7.1)
+
+TeamRosterMembership adds durable Team-to-AthleteProfile roster history with active-Team, matching-sport-participation, and Organization authorization invariants. Leaves close periods and rejoins create new aggregates. Multiple Teams remain valid; competition rosters, transfers, capacity, and eligibility remain outside this boundary.
 
 ## What changed in v1.6.0 (Sprint 7)
 
