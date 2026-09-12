@@ -7,6 +7,8 @@ export type { AuthIdentity, AuthIdentityProvider, AuthIdentityResult } from "@ap
 export type { AccountRepository, AccountLookupResult, AccountPersistenceError } from "@app/contracts/account-repository";
 export type { ClaimTokenGenerator, ClaimHashKeyProvider, ClaimHashResult, ClaimTokenParts, RawClaimToken, RawClaimSecret } from "@app/contracts/claim-token";
 export type { TrustedClaimIssuer, ClaimIssuancePrincipalProvider } from "@app/contracts/trusted-claim-issuer";
+export type { TrustedOrganizationBootstrapper, BootstrapPrincipalType, OrganizationBootstrapPrincipalValidator } from "@app/contracts/trusted-organization-bootstrapper";
+export type { OrganizationBootstrapRepository, OrganizationBootstrapCommand, OrganizationBootstrapGraph, OrganizationBootstrapPersistenceError } from "@app/contracts/organization-bootstrap-repository";
 export type { PersonClaimRepository, PersonClaimLookupResult, PersonClaimPersistenceError, ClaimAccountLinkRepository, ClaimAccountLinkError } from "@app/contracts/person-claim-repository";
 export type {
   PersonRepository,
