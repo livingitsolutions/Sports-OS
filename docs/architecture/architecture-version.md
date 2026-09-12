@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.2 — Sprint 10.1.1 (Format Plan Materialization)**
+**SportsOS Architecture v1.10.3 — Sprint 10.1.2 (Seed Assignment)**
 
 - Date: 2026-09-12
-- Sprint: 10.1.1 (format plan materialization)
+- Sprint: 10.1.2 (CompetitionEntry seed assignment)
 - Status: Active
-- Supersedes: v1.10.1 (Sprint 10.1)
+- Supersedes: v1.10.2 (Sprint 10.1.1)
+
+## What changed in v1.10.3 (Sprint 10.1.2)
+
+Durable `CompetitionSeedAssignment` records connect active entries to structural seed numbers without adding entrant identity to the format engine or Contests. The materialization marker freezes entrant count, manual partial assignment validates the current active scope and generated plan, and database uniqueness makes seed and entry claims concurrency-safe. Reassignment, participants, results, and progression remain deferred.
 
 ## What changed in v1.10.2 (Sprint 10.1.1)
 

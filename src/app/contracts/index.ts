@@ -28,6 +28,7 @@ export type { EventRepository,CompetitionRepository,DivisionRepository,StageRepo
 export type { CompetitionEntryRepository,CompetitionEntryLookup,CompetitionEntryPersistenceError } from "@app/contracts/competition-entry-repository";
 export type { CompetitionFormatRepository,CompetitionFormatLookup,CompetitionFormatPersistenceError } from "@app/contracts/competition-format-repository";
 export type { CompetitionStructureMaterializer,CompetitionStructureMaterializationError } from "@app/contracts/competition-structure-materializer";
+export type { CompetitionSeedAssignmentRepository,CompetitionSeedAssignmentLookup,CompetitionSeedAssignmentPersistenceError } from "@app/contracts/competition-seed-assignment-repository";
 export type { OrganizationRepository, OrganizationLookupResult, OrganizationPersistenceError } from "@app/contracts/organization-repository";
 export type { OrganizationMembershipRepository, OrganizationMembershipLookupResult, OrganizationMembershipPersistenceError } from "@app/contracts/organization-membership-repository";
 export type { OrganizationRoleRepository, OrganizationRoleAssignmentRepository, AuthorizationPersistenceError, RoleLookup, AssignmentLookup } from "@app/contracts/organization-authorization-repositories";
