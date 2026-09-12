@@ -17,6 +17,7 @@ export { InMemoryOrganizationMembershipRepository } from "@adapters/persistence/
 export { InMemoryOrganizationRoleRepository, InMemoryOrganizationRoleAssignmentRepository } from "@adapters/persistence/in-memory-organization-authorization-repositories";
 export { InMemoryOrganizationTrustRepository } from "@adapters/persistence/in-memory-organization-trust-repository";
 export { InMemoryAthleteProfileRepository } from "@adapters/persistence/in-memory-athlete-profile-repository";
+export { InMemoryTeamRepository } from "@adapters/persistence/in-memory-team-repository";
 export { InMemorySportDirectory } from "@adapters/sports/in-memory-sport-directory";
 export { InMemoryEventPublisher } from "@adapters/events/in-memory-event-publisher";
 export { NoopEventPublisher } from "@adapters/events/noop-event-publisher";
@@ -34,6 +35,7 @@ export { PgOrganizationTrustRepository } from "@adapters/persistence/pg/pg-organ
 export { PgOrganizationBootstrapRepository } from "@adapters/persistence/pg/pg-organization-bootstrap-repository";
 export { PgAthleteProfileRepository } from "@adapters/persistence/pg/pg-athlete-profile-repository";
 export { PgSportDirectory } from "@adapters/persistence/pg/pg-sport-directory";
+export { PgTeamRepository } from "@adapters/persistence/pg/pg-team-repository";
 
 /** Thrown by a port that has no configured adapter in the current composition. */
 export class NotConfiguredError extends Error {
