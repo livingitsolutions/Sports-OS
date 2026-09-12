@@ -4,12 +4,24 @@
 
 ## Current version
 
-**SportsOS Architecture v1.4.0 — Sprint 6.4 (Trusted Organization Onboarding Boundary)**
+**SportsOS Architecture v1.5.0 — Sprint 6.5 (Organization Trust Foundation)**
 
-- Date: 2026-09-14
-- Sprint: 6.4 (trusted organization onboarding orchestration)
+- Date: 2026-09-15
+- Sprint: 6.5 (Organization trust foundation)
 - Status: Active
-- Supersedes: v1.3.0 (Sprint 6.3)
+- Supersedes: v1.4.0 (Sprint 6.4)
+
+## What changed in v1.5.0 (Sprint 6.5)
+
+Organization existence, administration, and trust are explicitly separate.
+Trust is scoped, direct, non-transitive, and issued to a different Organization;
+`Organization.type` conveys no trust. Grants expire or revoke without deleting
+history. Issuance and revocation require an active issuer membership with the
+explicit `organization.trust.manage` permission. Issuing sanctioning or
+governing authority additionally requires direct effective incoming governing
+authority. No public issuance boundary exists. A future platform-governed
+mechanism must establish the first root authority. Event delivery remains
+post-persistence and best-effort without an outbox.
 
 ## What changed in v1.4.0 (Sprint 6.4)
 
