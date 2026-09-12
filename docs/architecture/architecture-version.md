@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.9.0 — Sprint 9 (Competition Entry Foundation)**
+**SportsOS Architecture v1.10.0 — Sprint 10 (Competition Format Foundation)**
 
 - Date: 2026-09-12
-- Sprint: 9 (competition entry foundation)
+- Sprint: 10 (competition format foundation)
 - Status: Active
-- Supersedes: v1.8.0 (Sprint 8)
+- Supersedes: v1.9.0 (Sprint 9)
+
+## What changed in v1.10.0 (Sprint 10)
+
+CompetitionFormat now records durable, sport-neutral format intent at Competition or optional Division scope. Pure engine contracts and a transient identity-neutral plan vocabulary describe structure and progression without implying that a catalog kind has an implemented engine. No bracket generator, participant assignment, seeding execution, result handling, progression execution, or Stage/Contest persistence orchestration was introduced.
 
 ## What changed in v1.9.0 (Sprint 9)
 

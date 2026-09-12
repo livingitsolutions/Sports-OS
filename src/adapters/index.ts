@@ -21,6 +21,7 @@ export { InMemoryTeamRepository } from "@adapters/persistence/in-memory-team-rep
 export { InMemoryTeamRosterMembershipRepository } from "@adapters/persistence/in-memory-team-roster-membership-repository";
 export { InMemoryEventRepository,InMemoryCompetitionRepository,InMemoryDivisionRepository,InMemoryStageRepository,InMemoryContestRepository } from "@adapters/persistence/in-memory-competition-repositories";
 export { InMemoryCompetitionEntryRepository } from "@adapters/persistence/in-memory-competition-entry-repository";
+export { InMemoryCompetitionFormatRepository } from "@adapters/persistence/in-memory-competition-format-repository";
 export { InMemorySportDirectory } from "@adapters/sports/in-memory-sport-directory";
 export { InMemoryEventPublisher } from "@adapters/events/in-memory-event-publisher";
 export { NoopEventPublisher } from "@adapters/events/noop-event-publisher";
@@ -42,6 +43,7 @@ export { PgTeamRepository } from "@adapters/persistence/pg/pg-team-repository";
 export { PgTeamRosterMembershipRepository } from "@adapters/persistence/pg/pg-team-roster-membership-repository";
 export { PgEventRepository,PgCompetitionRepository,PgDivisionRepository,PgStageRepository,PgContestRepository } from "@adapters/persistence/pg/pg-competition-repositories";
 export { PgCompetitionEntryRepository } from "@adapters/persistence/pg/pg-competition-entry-repository";
+export { PgCompetitionFormatRepository } from "@adapters/persistence/pg/pg-competition-format-repository";
 
 /** Thrown by a port that has no configured adapter in the current composition. */
 export class NotConfiguredError extends Error {

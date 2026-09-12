@@ -20,3 +20,12 @@ Athlete creation requires an existing active AthleteSportParticipation for the C
 Entries begin active at version 1. Withdrawal is non-destructive and advances the version. A withdrawn athlete or Team may re-enter with a new CompetitionEntry ID, while partial unique indexes ensure only one active entry per entrant and Competition regardless of Division.
 
 CompetitionEntry is distinct from Registration, TeamRosterMembership, future CompetitionEntryRoster, and future ContestParticipant. It contains no payment/application state, roster snapshot, seed, bracket, contest, result, or scheduling data. Trusted organizer commands are the current entry path; public registration later requires consent and workflow semantics before producing an accepted CompetitionEntry.
+# Competition formats
+
+`CompetitionFormat` is a durable format-selection aggregate; it is not a `Competition`, `Stage`, `Contest`, or `CompetitionEntry`. It belongs to one Competition and optionally one same-Competition Division. Retirement preserves history, and replacement creates a new aggregate. One active format is permitted per scope.
+
+Format selection does not imply engine implementation. The catalog describes intent, while the engine registry may return `unsupported_format`. Engines are pure, deterministic, infrastructure-independent, identity-neutral, and sport-neutral. They receive entrant count, never AthleteProfile, Team, CompetitionEntry, names, or PII.
+
+`CompetitionFormatPlan` is transient. It uses logical stage and contest references, generic contest capacity, and seed, contest-outcome, or stage-standing progression sources. Winner/loser are optional progression semantics and do not make Contest two-sided.
+
+The intended later flow is: Entries → determine entrant count → format engine → transient format plan → Stage/Contest generation → participant assignment → results → progression execution.
