@@ -1,6 +1,6 @@
 import type { AggregateRoot, AggregateVersion } from "@domain/aggregate";
 import type { Id, ISODateString } from "@shared/kernel";
-export const ORGANIZATION_PERMISSIONS=["organization.read","organization.update","organization.members.read","organization.members.manage","organization.roles.read","organization.roles.manage","organization.trust.read","organization.trust.manage"] as const;
+export const ORGANIZATION_PERMISSIONS=["organization.read","organization.update","organization.members.read","organization.members.manage","organization.roles.read","organization.roles.manage","organization.trust.read","organization.trust.manage","organization.teams.read","organization.teams.manage"] as const;
 export type OrganizationPermission=(typeof ORGANIZATION_PERMISSIONS)[number];
 export type AuthorizationStatus="active"|"inactive";
 export type OrganizationRoleKind="system"|"custom";

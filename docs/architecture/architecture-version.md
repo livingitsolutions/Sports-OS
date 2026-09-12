@@ -4,12 +4,18 @@
 
 ## Current version
 
-**SportsOS Architecture v1.5.0 — Sprint 6.5 (Organization Trust Foundation)**
+**SportsOS Architecture v1.6.0 — Sprint 7 (Team Foundation)**
 
-- Date: 2026-09-15
-- Sprint: 6.5 (Organization trust foundation)
+- Date: 2026-09-16
+- Sprint: 7 (Team foundation)
 - Status: Active
-- Supersedes: v1.4.0 (Sprint 6.4)
+- Supersedes: v1.5.0 (Sprint 6.5)
+
+## What changed in v1.6.0 (Sprint 7)
+
+Team is now a distinct Organization-owned, single-Sport aggregate and future
+competition participant. Its scope is identity and active/inactive lifecycle
+only; rosters and competition eligibility remain deferred.
 
 ## What changed in v1.5.0 (Sprint 6.5)
 
