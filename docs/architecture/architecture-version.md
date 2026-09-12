@@ -4,12 +4,22 @@
 
 ## Current version
 
-**SportsOS Architecture v1.2.0 — Sprint 6.2 (Organization Authorization Foundation)**
+**SportsOS Architecture v1.3.0 — Sprint 6.3 (Organization Bootstrap Boundary)**
 
-- Date: 2026-09-12
-- Sprint: 6.2 (organization authorization foundation)
+- Date: 2026-09-13
+- Sprint: 6.3 (organization bootstrap / administrative boundary)
 - Status: Active
-- Supersedes: v1.1.0 (Sprint 6.1)
+- Supersedes: v1.2.0 (Sprint 6.2)
+
+## What changed in v1.3.0 (Sprint 6.3)
+
+An internal trusted bootstrap operation now atomically establishes the first
+Organization administrator through the normal membership, system-role, and
+role-assignment graph. Organization creation grants no authority, there is no
+owner or creator bypass, same-Person replay is idempotent, and a different
+Person is rejected after bootstrap. The `organization-admin` role is scoped to
+one Organization and authorizes exclusively through its six explicit
+permissions. Public bootstrap and general administration remain deferred.
 
 ## What changed in v1.2.0 (Sprint 6.2)
 

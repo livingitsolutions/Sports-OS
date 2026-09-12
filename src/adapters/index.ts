@@ -29,6 +29,7 @@ export { PgPersonRepository } from "@adapters/persistence/pg/pg-person-repositor
 export { PgOrganizationRepository } from "@adapters/persistence/pg/pg-organization-repository";
 export { PgOrganizationMembershipRepository } from "@adapters/persistence/pg/pg-organization-membership-repository";
 export { PgOrganizationRoleRepository, PgOrganizationRoleAssignmentRepository } from "@adapters/persistence/pg/pg-organization-authorization-repositories";
+export { PgOrganizationBootstrapRepository } from "@adapters/persistence/pg/pg-organization-bootstrap-repository";
 export { PgAthleteProfileRepository } from "@adapters/persistence/pg/pg-athlete-profile-repository";
 export { PgSportDirectory } from "@adapters/persistence/pg/pg-sport-directory";
 

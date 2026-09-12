@@ -1,5 +1,22 @@
 # Authorization
 
+## Trusted Organization bootstrap
+
+Creating an Organization grants no authority to its caller, request creator,
+Account, Person, or membership. SportsOS has no `ownerId`, implicit owner, or
+creator bypass. The first administrator is established only by the internal
+trusted `BootstrapOrganizationAdministrator` boundary through an active
+OrganizationMembership, the Organization-local `organization-admin` system
+role, and an active OrganizationRoleAssignment.
+
+Bootstrap is derived from that active graph rather than a completion flag. It
+is one-time per Organization: replay for the same Person is idempotent, while a
+different Person is rejected. The system role has exactly the current six
+Organization permissions; its key has no special meaning to the authorization
+evaluator. It is not a platform-global administrator. No HTTP, RPC, Data API,
+or presentation boundary exposes bootstrap; selecting who may invoke it remains
+deferred to a future trusted onboarding policy.
+
 > Permission-based authorization derived from scoped memberships and
 > assignments, not hard-coded role checks. See R15, R1, R25, R26,
 > `person-role-model.md`, ADR-012.

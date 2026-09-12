@@ -1,5 +1,11 @@
 # Organization Model
 
+Organization creation and Organization authority are deliberately separate.
+Creation never grants authorization. Initial administration requires an
+explicit trusted, one-time bootstrap transaction and is represented only by
+the ordinary active membership → active role assignment → active
+Organization-scoped system role graph. There is no owner field or bypass.
+
 Organization is the platform identity for a structured body such as a club,
 league, association, federation, school, government sports body, company,
 event organizer, or venue operator. It may exist without people, teams, or
