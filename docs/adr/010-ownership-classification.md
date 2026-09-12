@@ -30,7 +30,7 @@ Define six explicit ownership classifications:
 3. **Person-owned** — created by/for a Person, belonging to that person across
    contexts. No `tenantId`. Examples: `AthleteProfile`, `IdentityVerification`,
    `QrCredential` (permanent), `GuardianRelationship`.
-4. **Organization/tenant-owned** — belongs to an Organization within a Tenant.
+4. **Organization-owned** — belongs to an Organization and may later use `organizationId` as an isolation boundary. Organization itself is a platform organizational identity without `tenantId`.
    Carries `tenantId`. Examples: `Organization`, `Team`,
    `OrganizationMembership`, `OrganizationRoleAssignment`, `Order`,
    `PaymentAttempt`.

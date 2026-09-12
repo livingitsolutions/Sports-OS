@@ -12,6 +12,8 @@ import type {
 } from "@domain/athlete/athlete.types";
 import type { Id, ISODateString } from "@shared/kernel";
 import type { AggregateVersion } from "@domain/aggregate";
+import { isValidOrganizationState } from "@domain/organization/organization";
+import type { Organization, OrganizationStatus, OrganizationType } from "@domain/organization/organization.types";
 
 /**
  * Explicit row <-> domain mapping. Database row shapes never leak into the
@@ -63,6 +65,13 @@ export function toPerson(row: PersonRow): Person | null {
     dateOfBirth: row.date_of_birth,
     lifecycleStatus: row.lifecycle_status as PersonLifecycleStatus,
   };
+}
+
+export interface OrganizationRow { readonly id: string; readonly name: string; readonly slug: string; readonly type: string; readonly status: string; readonly country_code: string; readonly version: number; readonly created_at: Date; readonly updated_at: Date; }
+export function toOrganization(row: OrganizationRow): Organization | null {
+  if (!(row.created_at instanceof Date) || !(row.updated_at instanceof Date)) return null;
+  const value: Organization = { id: row.id as Id<"Organization">, name: row.name, slug: row.slug, type: row.type as OrganizationType, status: row.status as OrganizationStatus, countryCode: row.country_code, version: row.version as AggregateVersion, createdAt: row.created_at.toISOString() as ISODateString, updatedAt: row.updated_at.toISOString() as ISODateString };
+  return isValidOrganizationState(value) ? value : null;
 }
 
 export interface AthleteProfileRow {

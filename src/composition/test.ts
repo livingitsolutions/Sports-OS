@@ -11,6 +11,8 @@ import { CreateAthleteProfile } from "@app/use-cases/create-athlete-profile";
 import { AddAthleteSport } from "@app/use-cases/add-athlete-sport";
 import { DeactivatePerson } from "@app/use-cases/deactivate-person";
 import type { AppContainer } from "@composition/container";
+import { InMemoryOrganizationRepository } from "@adapters/persistence/in-memory-organization-repository";
+import { CreateOrganization } from "@app/use-cases/create-organization";
 
 /**
  * Test composition root. Wires deterministic capability adapters so use-case
@@ -24,6 +26,7 @@ export interface TestContainer extends AppContainer {
   readonly idGenerator: FakeIdGenerator;
   readonly sportsIdGenerator: FakeSportsIdGenerator;
   readonly personRepository: InMemoryPersonRepository;
+  readonly organizationRepository: InMemoryOrganizationRepository;
   readonly athleteProfileRepository: InMemoryAthleteProfileRepository;
   readonly sportDirectory: InMemorySportDirectory;
   readonly domainEvents: InMemoryEventPublisher<DomainEvent>;
@@ -35,6 +38,7 @@ export function createTestContainer(): TestContainer {
   const idGenerator = new FakeIdGenerator();
   const sportsIdGenerator = new FakeSportsIdGenerator();
   const personRepository = new InMemoryPersonRepository();
+  const organizationRepository = new InMemoryOrganizationRepository();
   const athleteProfileRepository = new InMemoryAthleteProfileRepository();
   const sportDirectory = new InMemorySportDirectory();
   const domainEvents = new InMemoryEventPublisher<DomainEvent>();
@@ -45,6 +49,7 @@ export function createTestContainer(): TestContainer {
     idGenerator,
     sportsIdGenerator,
     personRepository,
+    organizationRepository,
     athleteProfileRepository,
     sportDirectory,
     domainEvents,
@@ -57,6 +62,7 @@ export function createTestContainer(): TestContainer {
         personRepository,
         domainEvents,
       }),
+      createOrganization: new CreateOrganization({ clock, idGenerator, organizationRepository, domainEvents }),
       deactivatePerson: new DeactivatePerson({ clock, idGenerator, personRepository, domainEvents }),
       createAthleteProfile: new CreateAthleteProfile({
         clock,

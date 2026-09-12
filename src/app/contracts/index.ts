@@ -18,6 +18,7 @@ export type {
   AthleteProfilePersistenceError,
 } from "@app/contracts/athlete-profile-repository";
 export type { SportDirectory } from "@app/contracts/sport-directory";
+export type { OrganizationRepository, OrganizationLookupResult, OrganizationPersistenceError } from "@app/contracts/organization-repository";
 export type {
   DomainEvent,
   IntegrationEvent,

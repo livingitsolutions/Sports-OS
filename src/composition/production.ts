@@ -12,6 +12,8 @@ import { CreateAthleteProfile } from "@app/use-cases/create-athlete-profile";
 import { AddAthleteSport } from "@app/use-cases/add-athlete-sport";
 import { DeactivatePerson } from "@app/use-cases/deactivate-person";
 import type { AppContainer } from "@composition/container";
+import { PgOrganizationRepository } from "@adapters/persistence/pg/pg-organization-repository";
+import { CreateOrganization } from "@app/use-cases/create-organization";
 
 /**
  * Production composition root. Wires real capability adapters to the
@@ -34,6 +36,7 @@ export function createProductionContainer(): AppContainer {
 
   const sql = createSql(readPgConfigFromEnv());
   const personRepository = new PgPersonRepository(sql);
+  const organizationRepository = new PgOrganizationRepository(sql);
   const athleteProfileRepository = new PgAthleteProfileRepository(sql);
   const sportDirectory = new PgSportDirectory(sql);
 
@@ -45,6 +48,7 @@ export function createProductionContainer(): AppContainer {
     idGenerator,
     sportsIdGenerator,
     personRepository,
+    organizationRepository,
     athleteProfileRepository,
     sportDirectory,
     domainEvents,
@@ -57,6 +61,7 @@ export function createProductionContainer(): AppContainer {
         personRepository,
         domainEvents,
       }),
+      createOrganization: new CreateOrganization({ clock, idGenerator, organizationRepository, domainEvents }),
       deactivatePerson: new DeactivatePerson({ clock, idGenerator, personRepository, domainEvents }),
       createAthleteProfile: new CreateAthleteProfile({
         clock,
