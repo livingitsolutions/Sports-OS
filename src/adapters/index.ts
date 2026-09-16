@@ -27,6 +27,7 @@ export { InMemoryCompetitionSeedFinalizer } from "@adapters/persistence/in-memor
 export { InMemoryContestParticipantRepository } from "@adapters/persistence/in-memory-contest-participant-repository";
 export { InMemoryContestResultRepository } from "@adapters/persistence/in-memory-contest-result-repository";
 export { InMemoryContestResultProgressor } from "@adapters/persistence/in-memory-contest-result-progressor";
+export { InMemoryCompetitionOutcomeFinalizer } from "@adapters/persistence/in-memory-competition-outcome-finalizer";
 export { InMemoryInitialContestParticipantMaterializer } from "@adapters/persistence/in-memory-initial-contest-participant-materializer";
 export { InMemorySportDirectory } from "@adapters/sports/in-memory-sport-directory";
 export { InMemoryEventPublisher } from "@adapters/events/in-memory-event-publisher";
@@ -55,6 +56,7 @@ export { PgCompetitionSeedFinalizer } from "@adapters/persistence/pg/pg-competit
 export { PgContestParticipantRepository } from "@adapters/persistence/pg/pg-contest-participant-repository";
 export { PgContestResultRepository } from "@adapters/persistence/pg/pg-contest-result-repository";
 export { PgContestResultProgressor } from "@adapters/persistence/pg/pg-contest-result-progressor";
+export { PgCompetitionOutcomeFinalizer } from "@adapters/persistence/pg/pg-competition-outcome-finalizer";
 export { PgInitialContestParticipantMaterializer } from "@adapters/persistence/pg/pg-initial-contest-participant-materializer";
 
 /** Thrown by a port that has no configured adapter in the current composition. */

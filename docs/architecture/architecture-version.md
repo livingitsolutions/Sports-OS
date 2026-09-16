@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.7 — Sprint 10.1.6 (Finalized Contest Outcome Progression)**
+**SportsOS Architecture v1.10.8 — Sprint 10.1.7 (Competition Outcome Foundation)**
 
 - Date: 2026-09-16
-- Sprint: 10.1.6 (finalized Contest outcome progression)
+- Sprint: 10.1.7 (single-elimination competition outcome foundation)
 - Status: Active
-- Supersedes: v1.10.6 (Sprint 10.1.5)
+- Supersedes: v1.10.7 (Sprint 10.1.6)
+
+## What changed in v1.10.8 (Sprint 10.1.7)
+
+A consumed terminal Single Elimination ContestResult now authoritatively creates one immutable, format-scoped CompetitionOutcome and two CompetitionPlacements. The terminal contest is derived structurally from the frozen deterministic plan; winner and loser identities flow through ContestResultOutcome, ContestParticipant, and CompetitionEntry snapshots. Outcome finalization is serialized and atomic in PostgreSQL. Competition lifecycle remains independent, and outcomes do not create achievements, Sports Passport records, rewards, or rankings.
 
 ## What changed in v1.10.7 (Sprint 10.1.6)
 

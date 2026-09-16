@@ -1,0 +1,6 @@
+import type {CompetitionOutcome,CompetitionPlacement} from "@domain/competition/competition-outcome";
+import type {Id,ISODateString,Result} from "@shared/kernel";
+export type CompetitionOutcomeFinalizationError={kind:"competition_outcome_already_finalized"|"terminal_contest_not_found"|"terminal_result_not_finalized"|"terminal_result_not_progressed"|"invalid_terminal_progression"|"malformed_terminal_result"|"cross_format_authority"|"invalid_persistence_state"|"unavailable";detail?:string};
+export type CompetitionOutcomeLookup={kind:"found";outcome:CompetitionOutcome;placements:readonly CompetitionPlacement[]}|{kind:"not_found"}|{kind:"unavailable";detail?:string};
+export interface CompetitionOutcomeRepository{findByFormatId(id:Id<"CompetitionFormat">):Promise<CompetitionOutcomeLookup>;}
+export interface CompetitionOutcomeFinalizer{finalize(i:{competitionFormatId:Id<"CompetitionFormat">;competitionId:Id<"Competition">;terminalPlanRef:string;expectedEntrantCount:number;outcomeId:Id<"CompetitionOutcome">;firstPlacementId:Id<"CompetitionPlacement">;secondPlacementId:Id<"CompetitionPlacement">;finalizedAt:ISODateString}):Promise<Result<{outcome:CompetitionOutcome;placements:readonly CompetitionPlacement[]},CompetitionOutcomeFinalizationError>>;}

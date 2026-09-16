@@ -33,6 +33,7 @@ export type { CompetitionSeedFinalizer,CompetitionSeedFinalizationError } from "
 export type { ContestParticipantRepository,ContestParticipantLookup,ContestParticipantPersistenceError } from "@app/contracts/contest-participant-repository";
 export type { ContestResultRepository,ContestResultRecorder,ContestResultLookup,ContestResultRecordingError } from "@app/contracts/contest-result-repository";
 export type { ContestResultProgressor,ContestResultProgressionError,ContestOutcomePlacement } from "@app/contracts/contest-result-progressor";
+export type { CompetitionOutcomeRepository,CompetitionOutcomeFinalizer,CompetitionOutcomeFinalizationError,CompetitionOutcomeLookup } from "@app/contracts/competition-outcome";
 export type { InitialContestParticipantMaterializer,InitialParticipantPlacement,InitialParticipantMaterializationError } from "@app/contracts/initial-contest-participant-materializer";
 export type { OrganizationRepository, OrganizationLookupResult, OrganizationPersistenceError } from "@app/contracts/organization-repository";
 export type { OrganizationMembershipRepository, OrganizationMembershipLookupResult, OrganizationMembershipPersistenceError } from "@app/contracts/organization-membership-repository";
