@@ -3,9 +3,10 @@ import type {
   TournamentOperationsView,
   TournamentParticipantView,
 } from "@app/contracts/tournament-operations-reader";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type React from "react";
 import type { FinalizeMatchClientResult } from "./client";
+import type { OrganizerCommandResult } from "./client";
 
 export const phasePresentation: Record<
   TournamentOperationsPhase,
@@ -230,6 +231,8 @@ export function TournamentWorkspace({
   tab,
   onTab,
   onFinalize,
+  onRetryProgression,
+  onFinalizeOutcome,
 }: {
   view: TournamentOperationsView;
   tab: WorkspaceTab;
@@ -238,6 +241,8 @@ export function TournamentWorkspace({
     contestId: string,
     winnerContestParticipantId: string,
   ) => Promise<FinalizeMatchClientResult>;
+  onRetryProgression?: (contestResultId: string) => Promise<OrganizerCommandResult>;
+  onFinalizeOutcome?: () => Promise<OrganizerCommandResult>;
 }) {
   const phase = phasePresentation[view.phase];
   const tabs: WorkspaceTab[] = [
@@ -274,16 +279,17 @@ export function TournamentWorkspace({
           </button>
         ))}
       </nav>
-      {tab === "overview" && <Overview view={view} />}{" "}
+      {tab === "overview" && <Overview view={view} onFinalizeOutcome={onFinalizeOutcome} />}{" "}
       {tab === "seeding" && <Seeding view={view} />}{" "}
       {tab === "bracket" && <Bracket view={view} />}{" "}
-      {tab === "matches" && <Matches view={view} onFinalize={onFinalize} />}{" "}
+      {tab === "matches" && <Matches view={view} onFinalize={onFinalize} onRetryProgression={onRetryProgression} />}{" "}
       {tab === "results" && <Results view={view} />}
     </div>
   );
 }
-function Overview({ view }: { view: TournamentOperationsView }) {
+function Overview({view,onFinalizeOutcome}:{view:TournamentOperationsView;onFinalizeOutcome?:()=>Promise<OrganizerCommandResult>}) {
   const next = view.contests.find((c) => !c.result);
+  const [pending,setPending]=useState(false),[feedback,setFeedback]=useState<OrganizerCommandResult>();
   return (
     <div className="overview-grid">
       <section className="feature-panel">
@@ -301,6 +307,7 @@ function Overview({ view }: { view: TournamentOperationsView }) {
           {view.contests.filter((c) => c.result).length} of{" "}
           {view.contests.length} matches finalized
         </small>
+        {view.phase === "final_pending" && <div className="outcome-action"><p>The Final is authoritative. Complete the outcome to publish Champion and finalist placements.</p><button className="finalize-button" disabled={pending||!onFinalizeOutcome} onClick={()=>{setPending(true);void onFinalizeOutcome?.().then(result=>{setFeedback(result);setPending(false);});}}>{pending?"Completing…":"Complete tournament outcome"}</button>{feedback&&feedback.kind!=="completed"&&<p className="operation-feedback error" role="alert">Outcome completion is unavailable. The Final result remains safe.</p>}</div>}
       </section>
       <section className="stat-stack">
         <article>
@@ -375,12 +382,14 @@ export function contestOperationState(
 function Matches({
   view,
   onFinalize,
+  onRetryProgression,
 }: {
   view: TournamentOperationsView;
   onFinalize?: (
     contestId: string,
     winnerContestParticipantId: string,
   ) => Promise<FinalizeMatchClientResult>;
+  onRetryProgression?: (contestResultId: string) => Promise<OrganizerCommandResult>;
 }) {
   const [open, setOpen] =
       useState<TournamentOperationsView["contests"][number]>(),
@@ -388,6 +397,9 @@ function Matches({
     [confirm, setConfirm] = useState(false),
     [pending, setPending] = useState(false),
     [feedback, setFeedback] = useState<FinalizeMatchClientResult>();
+  const [retrying,setRetrying]=useState<string>();
+  const closeButton=useRef<React.ElementRef<"button">>(null);
+  useEffect(()=>{if(open)closeButton.current?.focus();},[open]);
   const actionable = (c: TournamentOperationsView["contests"][number]) =>
     !c.result && c.status === "completed" && c.participants.length === 2;
   const submit = async () => {
@@ -436,6 +448,8 @@ function Matches({
               >
                 Enter result
               </button>
+            ) : c.result && c.progressionState === "awaiting_progression" ? (
+              <button className="secondary-button" disabled={retrying===c.result.contestResultId||!onRetryProgression} onClick={()=>{setRetrying(c.result!.contestResultId);void onRetryProgression?.(c.result!.contestResultId).finally(()=>setRetrying(undefined));}}>{retrying===c.result.contestResultId?"Retrying…":"Retry progression"}</button>
             ) : (
               <small className="mini-status">{contestOperationState(c)}</small>
             )}
@@ -449,6 +463,7 @@ function Matches({
             role="dialog"
             aria-modal="true"
             aria-labelledby="operation-title"
+            onKeyDown={event=>{if(event.key==="Escape"&&!pending)setOpen(undefined);}}
           >
             <header>
               <div>
@@ -463,6 +478,7 @@ function Matches({
                 <h2 id="operation-title">Finalize match result</h2>
               </div>
               <button
+                ref={closeButton}
                 aria-label="Close result operation"
                 disabled={pending}
                 onClick={() => setOpen(undefined)}
@@ -570,7 +586,7 @@ function Results({ view }: { view: TournamentOperationsView }) {
             <li key={p.competitionEntryId}>
               <b>{String(p.position).padStart(2, "0")}</b>
               <span>
-                {p.position === 1 ? "Champion" : `Place ${p.position}`}
+                {p.position === 1 ? "Champion" : "Finalist · second place"}
                 <small>{shortEntry(p.competitionEntryId)}</small>
               </span>
             </li>

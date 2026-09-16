@@ -149,3 +149,12 @@ export async function finalizeOrganizerMatch(input: {
     return { kind: "unavailable" };
   }
 }
+
+export type OrganizerCommandResult={kind:"completed"|"unauthenticated"|"forbidden"|"conflict"|"invalid"|"unavailable"};
+async function organizerCommand(path:string,input:Record<string,string>):Promise<OrganizerCommandResult>{
+ const url=import.meta.env.VITE_SUPABASE_URL as string|undefined,key=import.meta.env.VITE_SUPABASE_ANON_KEY as string|undefined;if(!url?.trim()||!key?.trim())return{kind:"unavailable"};
+ const session=await createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}).auth.getSession(),token=session.data.session?.access_token;if(!token)return{kind:"unauthenticated"};
+ try{const response=await window.fetch(path,{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(input)});return{kind:response.ok?"completed":response.status===401?"unauthenticated":response.status===403?"forbidden":response.status===409?"conflict":response.status===400||response.status===422?"invalid":"unavailable"};}catch{return{kind:"unavailable"};}
+}
+export const retryOrganizerProgression=(input:{organizationId:string;contestResultId:string})=>organizerCommand("/.netlify/functions/retry-organizer-progression",input);
+export const finalizeOrganizerOutcome=(input:{organizationId:string;competitionFormatId:string})=>organizerCommand("/.netlify/functions/finalize-organizer-outcome",input);

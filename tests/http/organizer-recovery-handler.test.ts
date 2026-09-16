@@ -1,0 +1,12 @@
+/* global Request */
+import {describe,expect,it,vi} from "vitest";
+import {createFinalizeOrganizerOutcomeHandler,createRetryOrganizerProgressionHandler} from "@adapters/http/organizer-recovery-handler";
+const request=(body:unknown,authorization="Bearer verified")=>new Request("https://sports.test/operation",{method:"POST",headers:{authorization,"content-type":"application/json"},body:JSON.stringify(body)});
+const runtime=(operation:"retryProgression"|"finalizeOutcome")=>{const execute=vi.fn().mockResolvedValue({ok:true,value:{}});return{execute,create:()=>({retryProgression:{execute:operation==="retryProgression"?execute:vi.fn()},finalizeOutcome:{execute:operation==="finalizeOutcome"?execute:vi.fn()},close:async()=>undefined}) as never};};
+describe("authenticated organizer recovery HTTP boundaries",()=>{
+ it("rejects unauthenticated recovery before composition",async()=>{const create=vi.fn(),response=await createRetryOrganizerProgressionHandler(create)(request({organizationId:"org",contestResultId:"result"},""));expect(response.status).toBe(401);expect(create).not.toHaveBeenCalled();});
+ it.each(["actingMembershipId","progressionTarget","downstreamParticipant","winnerCompetitionEntryId"])("rejects retry tampering via %s",async field=>{const create=vi.fn(),response=await createRetryOrganizerProgressionHandler(create)(request({organizationId:"org",contestResultId:"result",[field]:"fake"}));expect(response.status).toBe(400);expect(create).not.toHaveBeenCalled();});
+ it("passes only result and organization identifiers",async()=>{const r=runtime("retryProgression"),body={organizationId:"org",contestResultId:"result"},response=await createRetryOrganizerProgressionHandler(r.create)(request(body));expect(response.status).toBe(200);expect(r.execute).toHaveBeenCalledWith(body);});
+ it.each(["champion","placements","firstPlace","secondPlace","actingMembershipId"])("rejects outcome tampering via %s",async field=>{const create=vi.fn(),response=await createFinalizeOrganizerOutcomeHandler(create)(request({organizationId:"org",competitionFormatId:"format",[field]:"fake"}));expect(response.status).toBe(400);expect(create).not.toHaveBeenCalled();});
+ it("passes only format and organization identifiers",async()=>{const r=runtime("finalizeOutcome"),body={organizationId:"org",competitionFormatId:"format"},response=await createFinalizeOrganizerOutcomeHandler(r.create)(request(body));expect(response.status).toBe(200);expect(r.execute).toHaveBeenCalledWith(body);});
+});
