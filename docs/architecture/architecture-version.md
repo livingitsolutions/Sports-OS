@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.8 — Sprint 10.1.7 (Competition Outcome Foundation)**
+**SportsOS Architecture v1.11.0 — Sprint 11 (Tournament Operations Read Model)**
 
 - Date: 2026-09-16
-- Sprint: 10.1.7 (single-elimination competition outcome foundation)
+- Sprint: 11 (single-elimination tournament operations read model)
 - Status: Active
-- Supersedes: v1.10.7 (Sprint 10.1.6)
+- Supersedes: v1.10.8 (Sprint 10.1.7)
+
+## What changed in v1.11.0 (Sprint 11)
+
+A read-only application projection now exposes coherent Single Elimination tournament operations state without persistence leakage, identity joins, a new aggregate, or another stored lifecycle. The organization scope is derived from the format hierarchy and requires the exact events-read permission.
 
 ## What changed in v1.10.8 (Sprint 10.1.7)
 
