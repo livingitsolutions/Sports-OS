@@ -24,6 +24,8 @@ export { InMemoryCompetitionEntryRepository } from "@adapters/persistence/in-mem
 export { InMemoryCompetitionFormatRepository } from "@adapters/persistence/in-memory-competition-format-repository";
 export { InMemoryCompetitionSeedAssignmentRepository } from "@adapters/persistence/in-memory-competition-seed-assignment-repository";
 export { InMemoryCompetitionSeedFinalizer } from "@adapters/persistence/in-memory-competition-seed-finalizer";
+export { InMemoryContestParticipantRepository } from "@adapters/persistence/in-memory-contest-participant-repository";
+export { InMemoryInitialContestParticipantMaterializer } from "@adapters/persistence/in-memory-initial-contest-participant-materializer";
 export { InMemorySportDirectory } from "@adapters/sports/in-memory-sport-directory";
 export { InMemoryEventPublisher } from "@adapters/events/in-memory-event-publisher";
 export { NoopEventPublisher } from "@adapters/events/noop-event-publisher";
@@ -48,6 +50,8 @@ export { PgCompetitionEntryRepository } from "@adapters/persistence/pg/pg-compet
 export { PgCompetitionFormatRepository } from "@adapters/persistence/pg/pg-competition-format-repository";
 export { PgCompetitionSeedAssignmentRepository } from "@adapters/persistence/pg/pg-competition-seed-assignment-repository";
 export { PgCompetitionSeedFinalizer } from "@adapters/persistence/pg/pg-competition-seed-finalizer";
+export { PgContestParticipantRepository } from "@adapters/persistence/pg/pg-contest-participant-repository";
+export { PgInitialContestParticipantMaterializer } from "@adapters/persistence/pg/pg-initial-contest-participant-materializer";
 
 /** Thrown by a port that has no configured adapter in the current composition. */
 export class NotConfiguredError extends Error {

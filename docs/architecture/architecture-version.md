@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.4 — Sprint 10.1.3 (Seed Assignment Finalization)**
+**SportsOS Architecture v1.10.5 — Sprint 10.1.4 (Initial Contest Participation)**
 
 - Date: 2026-09-12
-- Sprint: 10.1.3 (seed assignment finalization)
+- Sprint: 10.1.4 (initial Contest participation)
 - Status: Active
-- Supersedes: v1.10.3 (Sprint 10.1.2)
+- Supersedes: v1.10.4 (Sprint 10.1.3)
+
+## What changed in v1.10.5 (Sprint 10.1.4)
+
+Finalized seed snapshots now materialize direct SeedSources into durable, sport-neutral ContestParticipant positions in one serialized transaction. Generated Contests retain their engine logical reference, while outcome- and standing-derived positions remain empty for later progression execution.
 
 ## What changed in v1.10.4 (Sprint 10.1.3)
 

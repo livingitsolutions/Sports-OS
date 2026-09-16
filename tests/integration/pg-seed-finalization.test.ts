@@ -168,10 +168,10 @@ describe.skipIf(!RUN)("PostgreSQL seed finalization", () => {
     >`SELECT seed_finalized_at FROM competition_format_materializations WHERE competition_format_id=${format.id}`;
     expect(locked?.seed_finalized_at.toISOString()).toBe(NOW);
     expect(await snapshot(format)).toEqual(before);
-    const [participantTable] = await sql<
-      { table_name: string | null }[]
-    >`SELECT to_regclass('public.contest_participants')::text AS table_name`;
-    expect(participantTable?.table_name).toBeNull();
+    const [participants] = await sql<
+      { count: number }[]
+    >`SELECT count(*)::int count FROM contest_participants cp JOIN contests c ON c.id=cp.contest_id JOIN competition_stages s ON s.id=c.stage_id WHERE s.competition_format_id=${format.id}`;
+    expect(participants?.count).toBe(0);
     const identityColumns =
       await sql`SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='contests' AND column_name IN ('competition_entry_id','athlete_profile_id','team_id')`;
     expect(identityColumns).toHaveLength(0);

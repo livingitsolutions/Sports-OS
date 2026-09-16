@@ -1,0 +1,5 @@
+import type {ContestParticipant} from "@domain/competition/contest-participant";
+import type {Id,Result} from "@shared/kernel";
+export type ContestParticipantLookup={kind:"found";participant:ContestParticipant}|{kind:"not_found"}|{kind:"invalid_persistence_state"|"unavailable";detail?:string};
+export type ContestParticipantPersistenceError={kind:"duplicate_id"|"position_occupied"|"entry_already_present"|"parent_not_found"|"invalid_persistence_state"|"unavailable";detail?:string};
+export interface ContestParticipantRepository{findById(id:Id<"ContestParticipant">):Promise<ContestParticipantLookup>;findByContestAndPosition(contestId:Id<"Contest">,position:number):Promise<ContestParticipantLookup>;listByContest(contestId:Id<"Contest">):Promise<Result<readonly ContestParticipant[],ContestParticipantPersistenceError>>;listByCompetitionFormat(formatId:Id<"CompetitionFormat">):Promise<Result<readonly ContestParticipant[],ContestParticipantPersistenceError>>;create(participant:ContestParticipant):Promise<Result<ContestParticipant,ContestParticipantPersistenceError>>;}
