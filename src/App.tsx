@@ -1,24 +1,8 @@
-/**
- * SportsOS — architecture sprint placeholder.
- *
- * No product UI is built this sprint. This shell only proves the build path
- * (React + Vite + TS + Tailwind) compiles and that layer boundaries resolve.
- */
-export default function App() {
-  return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-8">
-      <div className="max-w-xl text-center space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight">SportsOS</h1>
-        <p className="text-slate-400 leading-relaxed">
-          Architecture sprint. Domain boundaries, ADRs, and port/adapter seams
-          are defined under <code className="text-brand-300">docs/</code> and
-          <code className="text-brand-300"> src/</code>.
-        </p>
-        <p className="text-slate-500 text-sm">
-          Product UI, auth, migrations, and feature implementation arrive in
-          Sprint 1.
-        </p>
-      </div>
-    </main>
-  );
-}
+import {useEffect,useState} from "react";
+import type React from "react";
+import {EmptyState,LoadingState,MessageState,TournamentWorkspace,type WorkspaceTab} from "./presentation/tournament";
+import {loadTournamentFromLocation,type TournamentLoadResult} from "./presentation/client";
+const nav=[{label:"Overview",icon:"grid",available:true},{label:"Tournaments",icon:"flag",available:true},{label:"Teams",icon:"people",available:false},{label:"Athletes",icon:"person",available:false},{label:"Matches",icon:"whistle",available:false}];
+function Mark({name}:{name:string}){return <span className={`nav-icon nav-icon--${name}`} aria-hidden="true"/>}
+export function AppShell({children}:{children:React.ReactNode}){return <div className="app-shell"><aside className="sidebar"><a className="brand" href="/" aria-label="SportsOS home"><span>S</span><b>SPORTS<em>OS</em></b></a><div className="org-switch"><small>Organization</small><strong>Organizer workspace</strong><i aria-hidden="true">PH</i></div><nav aria-label="Primary"><p>Compete</p>{nav.map(item=><a key={item.label} href={item.available?"#workspace":undefined} className={!item.available?"disabled":item.label==="Tournaments"?"active":""} aria-disabled={!item.available}><Mark name={item.icon}/><span>{item.label}</span>{!item.available&&<small>Later</small>}</a>)}</nav><footer><span>OS</span><div><b>Organizer</b><small>Operations access</small></div></footer></aside><main className="main"><header className="mobile-top"><a className="brand" href="/"><span>S</span><b>SPORTS<em>OS</em></b></a><div><small>Organizer workspace</small><i>PH</i></div></header>{children}</main><nav className="mobile-nav" aria-label="Mobile primary navigation">{nav.slice(0,3).map(item=><a key={item.label} href={item.available?"#workspace":undefined} aria-disabled={!item.available} className={item.label==="Tournaments"?"active":!item.available?"disabled":""}><Mark name={item.icon}/><span>{item.label}</span></a>)}</nav></div>}
+export default function App(){const [state,setState]=useState<TournamentLoadResult>({kind:"empty"});const [loading,setLoading]=useState(true);const [tab,setTab]=useState<WorkspaceTab>("overview");useEffect(()=>{loadTournamentFromLocation().then(setState).finally(()=>setLoading(false))},[]);return <AppShell><div className="page" id="workspace"><header className="page-intro"><div><p className="eyebrow">Competition control</p><h1>Organizer overview</h1><p>Read the field. Move the tournament forward.</p></div><time>{new Intl.DateTimeFormat("en-PH",{weekday:"short",day:"numeric",month:"short"}).format(new Date())}</time></header>{loading?<LoadingState/>:state.kind==="ready"?<TournamentWorkspace view={state.view} tab={tab} onTab={setTab}/>:state.kind==="empty"?<EmptyState>Select a tournament from an authorized organizer link to open its live operations workspace.</EmptyState>:state.kind==="forbidden"?<MessageState kind="forbidden" title="Access not available">Your organizer membership does not have permission to view this tournament.</MessageState>:state.kind==="unsupported"?<MessageState kind="unsupported" title="Format not supported here">This operations workspace currently supports Single Elimination only.</MessageState>:<MessageState kind="error" title="Tournament unavailable">We couldn’t load this workspace. Try again in a moment.</MessageState>}</div></AppShell>}
