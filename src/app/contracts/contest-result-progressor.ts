@@ -1,0 +1,5 @@
+import type {ContestParticipant} from "@domain/competition/contest-participant";
+import type {Id,ISODateString,Result} from "@shared/kernel";
+export interface ContestOutcomePlacement{readonly targetContestPlanRef:string;readonly participant:Omit<Extract<ContestParticipant,{sourceType:"contest_outcome"}>,"contestId">;}
+export type ContestResultProgressionError={kind:"result_already_progressed"|"result_not_finalized"|"malformed_outcomes"|"source_contest_not_completed"|"format_not_managed"|"format_inactive"|"format_not_materialized"|"seeding_not_finalized"|"participants_not_materialized"|"competition_closed"|"division_inactive"|"target_mapping_missing"|"target_contest_not_open"|"target_position_conflict"|"cross_format_target"|"invalid_persistence_state"|"unavailable";detail?:string};
+export interface ContestResultProgressor{progress(i:{contestResultId:Id<"ContestResult">;sourceContestId:Id<"Contest">;competitionFormatId:Id<"CompetitionFormat">;expectedEntrantCount:number;placements:readonly ContestOutcomePlacement[];progressedAt:ISODateString}):Promise<Result<{participantCount:number;progressedAt:ISODateString},ContestResultProgressionError>>;}
