@@ -32,6 +32,10 @@ import { PgContestResultRepository } from "@adapters/persistence/pg/pg-contest-r
 import { RecordContestResult } from "@app/use-cases/record-contest-result";
 import { ProgressFinalizedContestResult } from "@app/use-cases/progress-finalized-contest-result";
 import { FinalizeOrganizerMatchResult } from "@app/use-cases/finalize-organizer-match-result";
+import { RetryOrganizerMatchProgression } from "@app/use-cases/retry-organizer-match-progression";
+import { FinalizeOrganizerCompetitionOutcome } from "@app/use-cases/finalize-organizer-competition-outcome";
+import { FinalizeCompetitionOutcome } from "@app/use-cases/finalize-competition-outcome";
+import { PgCompetitionOutcomeFinalizer } from "@adapters/persistence/pg/pg-competition-outcome-finalizer";
 import { SystemClock } from "@adapters/clock/system-clock";
 import { UuidIdGenerator } from "@adapters/id/uuid-id-generator";
 import { NoopEventPublisher } from "@adapters/events/noop-event-publisher";
@@ -40,6 +44,8 @@ export interface OrganizerRequestRuntime {
   readonly organizerContext: GetOrganizerContext;
   readonly tournamentOperations: GetAuthenticatedTournamentOperationsView;
   readonly finalizeMatch: FinalizeOrganizerMatchResult;
+  readonly retryProgression: RetryOrganizerMatchProgression;
+  readonly finalizeOutcome: FinalizeOrganizerCompetitionOutcome;
   close(): Promise<void>;
 }
 export function createOrganizerRequestRuntime(
@@ -120,6 +126,7 @@ export function createOrganizerRequestRuntime(
     idGenerator,
     domainEvents,
   });
+  const finalizeOutcomeAuthority=new FinalizeCompetitionOutcome({formatRepository:new PgCompetitionFormatRepository(sql),competitionRepository,eventRepository,divisionRepository:new PgDivisionRepository(sql),structure:new PgCompetitionStructureMaterializer(sql),finalizer:new PgCompetitionOutcomeFinalizer(sql),engines:createCompetitionFormatEngineRegistry(),authorization,clock,idGenerator,domainEvents});
   return {
     organizerContext,
     tournamentOperations: new GetAuthenticatedTournamentOperationsView({
@@ -132,6 +139,8 @@ export function createOrganizerRequestRuntime(
       record,
       progress,
     }),
+    retryProgression:new RetryOrganizerMatchProgression({organizerContext,progress}),
+    finalizeOutcome:new FinalizeOrganizerCompetitionOutcome({organizerContext,finalizeOutcome:finalizeOutcomeAuthority}),
     close: () => sql.end({ timeout: 5 }),
   };
 }

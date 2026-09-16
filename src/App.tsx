@@ -11,6 +11,8 @@ import {
 } from "./presentation/tournament";
 import {
   finalizeOrganizerMatch,
+  retryOrganizerProgression,
+  finalizeOrganizerOutcome,
   loadOrganizerWorkspace,
   type OrganizerLoadResult,
 } from "./presentation/client";
@@ -216,6 +218,8 @@ export default function App() {
               );
               return result;
             }}
+            onRetryProgression={async contestResultId=>{const result=await retryOrganizerProgression({organizationId:workspace.selected.organizationId,contestResultId});setState(await loadOrganizerWorkspace(workspace.selected.organizationId));return result;}}
+            onFinalizeOutcome={async()=>{const result=await finalizeOrganizerOutcome({organizationId:workspace.selected.organizationId,competitionFormatId:workspace.view.competitionFormatId});setState(await loadOrganizerWorkspace(workspace.selected.organizationId));return result;}}
           />
         ) : !state ? (
           <LoadingState />
