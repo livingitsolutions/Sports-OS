@@ -29,6 +29,7 @@ export { InMemoryContestResultRepository } from "@adapters/persistence/in-memory
 export { InMemoryContestResultProgressor } from "@adapters/persistence/in-memory-contest-result-progressor";
 export { InMemoryCompetitionOutcomeFinalizer } from "@adapters/persistence/in-memory-competition-outcome-finalizer";
 export { InMemoryInitialContestParticipantMaterializer } from "@adapters/persistence/in-memory-initial-contest-participant-materializer";
+export { InMemoryTournamentOperationsReader } from "@adapters/persistence/in-memory-tournament-operations-reader";
 export { InMemorySportDirectory } from "@adapters/sports/in-memory-sport-directory";
 export { InMemoryEventPublisher } from "@adapters/events/in-memory-event-publisher";
 export { NoopEventPublisher } from "@adapters/events/noop-event-publisher";
@@ -58,6 +59,7 @@ export { PgContestResultRepository } from "@adapters/persistence/pg/pg-contest-r
 export { PgContestResultProgressor } from "@adapters/persistence/pg/pg-contest-result-progressor";
 export { PgCompetitionOutcomeFinalizer } from "@adapters/persistence/pg/pg-competition-outcome-finalizer";
 export { PgInitialContestParticipantMaterializer } from "@adapters/persistence/pg/pg-initial-contest-participant-materializer";
+export { PgTournamentOperationsReader } from "@adapters/persistence/pg/pg-tournament-operations-reader";
 
 /** Thrown by a port that has no configured adapter in the current composition. */
 export class NotConfiguredError extends Error {

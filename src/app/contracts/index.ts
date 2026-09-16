@@ -35,6 +35,7 @@ export type { ContestResultRepository,ContestResultRecorder,ContestResultLookup,
 export type { ContestResultProgressor,ContestResultProgressionError,ContestOutcomePlacement } from "@app/contracts/contest-result-progressor";
 export type { CompetitionOutcomeRepository,CompetitionOutcomeFinalizer,CompetitionOutcomeFinalizationError,CompetitionOutcomeLookup } from "@app/contracts/competition-outcome";
 export type { InitialContestParticipantMaterializer,InitialParticipantPlacement,InitialParticipantMaterializationError } from "@app/contracts/initial-contest-participant-materializer";
+export type { TournamentOperationsReader,TournamentOperationsReadResult,TournamentOperationsSnapshot,TournamentOperationsView,TournamentOperationsPhase,TournamentProgressionState } from "@app/contracts/tournament-operations-reader";
 export type { OrganizationRepository, OrganizationLookupResult, OrganizationPersistenceError } from "@app/contracts/organization-repository";
 export type { OrganizationMembershipRepository, OrganizationMembershipLookupResult, OrganizationMembershipPersistenceError } from "@app/contracts/organization-membership-repository";
 export type { OrganizationRoleRepository, OrganizationRoleAssignmentRepository, AuthorizationPersistenceError, RoleLookup, AssignmentLookup } from "@app/contracts/organization-authorization-repositories";

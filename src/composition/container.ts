@@ -14,6 +14,8 @@ import type { AddAthleteSport } from "@app/use-cases/add-athlete-sport";
 import type { DeactivatePerson } from "@app/use-cases/deactivate-person";
 import type { OrganizationRepository } from "@app/contracts/organization-repository";
 import type { CreateOrganization } from "@app/use-cases/create-organization";
+import type {TournamentOperationsReader} from "@app/contracts/tournament-operations-reader";
+import type {GetTournamentOperationsView} from "@app/use-cases/get-tournament-operations-view";
 
 /**
  * The set of application capabilities and use cases wired at startup. This is
@@ -31,6 +33,7 @@ export interface AppContainer {
   readonly sportDirectory: SportDirectory;
   readonly domainEvents: DomainEventPublisher;
   readonly integrationEvents: IntegrationEventPublisher;
+  readonly tournamentOperationsReader: TournamentOperationsReader;
   readonly useCases: AppUseCases;
 }
 
@@ -40,4 +43,5 @@ export interface AppUseCases {
   readonly addAthleteSport: AddAthleteSport;
   readonly deactivatePerson: DeactivatePerson;
   readonly createOrganization: CreateOrganization;
+  readonly getTournamentOperationsView: GetTournamentOperationsView;
 }

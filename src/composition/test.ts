@@ -16,6 +16,10 @@ import { CreateOrganization } from "@app/use-cases/create-organization";
 import { InMemoryOrganizationMembershipRepository } from "@adapters/persistence/in-memory-organization-membership-repository";
 import { CreateOrganizationMembership } from "@app/use-cases/create-organization-membership";
 import { DeactivateOrganizationMembership, ReactivateOrganizationMembership } from "@app/use-cases/change-organization-membership-status";
+import {InMemoryTournamentOperationsReader} from "@adapters/persistence/in-memory-tournament-operations-reader";
+import {InMemoryOrganizationRoleAssignmentRepository,InMemoryOrganizationRoleRepository} from "@adapters/persistence/in-memory-organization-authorization-repositories";
+import {AuthorizeOrganizationPermission} from "@app/use-cases/authorize-organization-permission";
+import {GetTournamentOperationsView} from "@app/use-cases/get-tournament-operations-view";
 
 /**
  * Test composition root. Wires deterministic capability adapters so use-case
@@ -40,6 +44,7 @@ export interface TestContainer extends AppContainer {
   readonly sportDirectory: InMemorySportDirectory;
   readonly domainEvents: InMemoryEventPublisher<DomainEvent>;
   readonly integrationEvents: InMemoryEventPublisher<IntegrationEvent>;
+  readonly tournamentOperationsReader: InMemoryTournamentOperationsReader;
 }
 
 export function createTestContainer(): TestContainer {
@@ -53,6 +58,8 @@ export function createTestContainer(): TestContainer {
   const sportDirectory = new InMemorySportDirectory();
   const domainEvents = new InMemoryEventPublisher<DomainEvent>();
   const integrationEvents = new InMemoryEventPublisher<IntegrationEvent>();
+  const tournamentOperationsReader=new InMemoryTournamentOperationsReader();
+  const authorization=new AuthorizeOrganizationPermission({membershipRepository:organizationMembershipRepository,roleRepository:new InMemoryOrganizationRoleRepository(),assignmentRepository:new InMemoryOrganizationRoleAssignmentRepository()});
 
   return {
     clock,
@@ -70,6 +77,7 @@ export function createTestContainer(): TestContainer {
     sportDirectory,
     domainEvents,
     integrationEvents,
+    tournamentOperationsReader,
     useCases: {
       createPerson: new CreatePerson({
         clock,
@@ -79,6 +87,7 @@ export function createTestContainer(): TestContainer {
         domainEvents,
       }),
       createOrganization: new CreateOrganization({ clock, idGenerator, organizationRepository, domainEvents }),
+      getTournamentOperationsView:new GetTournamentOperationsView({reader:tournamentOperationsReader,authorization}),
       deactivatePerson: new DeactivatePerson({ clock, idGenerator, personRepository, domainEvents }),
       createAthleteProfile: new CreateAthleteProfile({
         clock,

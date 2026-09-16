@@ -14,6 +14,11 @@ import { DeactivatePerson } from "@app/use-cases/deactivate-person";
 import type { AppContainer } from "@composition/container";
 import { PgOrganizationRepository } from "@adapters/persistence/pg/pg-organization-repository";
 import { CreateOrganization } from "@app/use-cases/create-organization";
+import {PgTournamentOperationsReader} from "@adapters/persistence/pg/pg-tournament-operations-reader";
+import {PgOrganizationMembershipRepository} from "@adapters/persistence/pg/pg-organization-membership-repository";
+import {PgOrganizationRoleAssignmentRepository,PgOrganizationRoleRepository} from "@adapters/persistence/pg/pg-organization-authorization-repositories";
+import {AuthorizeOrganizationPermission} from "@app/use-cases/authorize-organization-permission";
+import {GetTournamentOperationsView} from "@app/use-cases/get-tournament-operations-view";
 
 /**
  * Production composition root. Wires real capability adapters to the
@@ -39,6 +44,8 @@ export function createProductionContainer(): AppContainer {
   const organizationRepository = new PgOrganizationRepository(sql);
   const athleteProfileRepository = new PgAthleteProfileRepository(sql);
   const sportDirectory = new PgSportDirectory(sql);
+  const tournamentOperationsReader=new PgTournamentOperationsReader(sql);
+  const authorization=new AuthorizeOrganizationPermission({membershipRepository:new PgOrganizationMembershipRepository(sql),roleRepository:new PgOrganizationRoleRepository(sql),assignmentRepository:new PgOrganizationRoleAssignmentRepository(sql)});
 
   const domainEvents = new NoopEventPublisher<DomainEvent>();
   const integrationEvents = new NoopEventPublisher<IntegrationEvent>();
@@ -53,6 +60,7 @@ export function createProductionContainer(): AppContainer {
     sportDirectory,
     domainEvents,
     integrationEvents,
+    tournamentOperationsReader,
     useCases: {
       createPerson: new CreatePerson({
         clock,
@@ -62,6 +70,7 @@ export function createProductionContainer(): AppContainer {
         domainEvents,
       }),
       createOrganization: new CreateOrganization({ clock, idGenerator, organizationRepository, domainEvents }),
+      getTournamentOperationsView:new GetTournamentOperationsView({reader:tournamentOperationsReader,authorization}),
       deactivatePerson: new DeactivatePerson({ clock, idGenerator, personRepository, domainEvents }),
       createAthleteProfile: new CreateAthleteProfile({
         clock,
