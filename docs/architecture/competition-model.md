@@ -47,3 +47,12 @@ Slots above the entrant count are absences, not participants. Pairing an actual 
 There is one planned Stage for every bracket round, increasing toward `stage:final`. Every Contest position has exactly one source: either one structural seed or the winner of one earlier Contest. Every non-final winner feeds exactly one later position, loser progressions are absent, and the Final has no outgoing rule. The Final is only the graph endpoint; it does not identify or persist a champion.
 
 Planning uses stable logical references and contains no AthleteProfile, Team, CompetitionEntry, name, database ID, time, or random value. The registry composition registers only `single_elimination`; other catalog kinds remain typed `unsupported_format`. The engine neither reads nor writes persistence, and plan materialization, entrant assignment, result interpretation, and progression execution remain future orchestration boundaries.
+# Finalized result progression
+
+One-hop progression follows this authority chain:
+
+`Finalized ContestResult → ContestResultOutcome → source ContestParticipant → CompetitionEntry → ContestOutcomeSource → target PlannedContest.ref and numeric position → durable Contest.plan_ref → downstream ContestParticipant`.
+
+Only rules originating from the supplied result's Contest are evaluated. Target lookup uses `plan_ref`, never names, sequence, query ordering, scores, or entrant identity. The captured CompetitionEntry is a historical snapshot; athlete, Team, roster, and current entry status are not re-evaluated or copied.
+
+Progression is non-recursive. A downstream Contest requires its own independently finalized result and later invocation. A terminal Final has no outgoing placements but is marked progressed with a zero count. This does not create a champion or standings.

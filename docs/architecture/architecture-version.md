@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.6 — Sprint 10.1.5 (Contest Result Foundation)**
+**SportsOS Architecture v1.10.7 — Sprint 10.1.6 (Finalized Contest Outcome Progression)**
 
 - Date: 2026-09-16
-- Sprint: 10.1.5 (Contest result foundation)
+- Sprint: 10.1.6 (finalized Contest outcome progression)
 - Status: Active
-- Supersedes: v1.10.5 (Sprint 10.1.4)
+- Supersedes: v1.10.6 (Sprint 10.1.5)
+
+## What changed in v1.10.7 (Sprint 10.1.6)
+
+One trusted operation now consumes a finalized ContestResult and atomically places the winner or loser CompetitionEntry into exact downstream plan positions. The finalized outcomes are sole authority, durable `plan_ref` values map targets, and result-level markers provide serialized at-most-once handling. Processing is one hop only; a terminal Final records a successful zero-participant marker and does not determine a champion or standings.
 
 ## What changed in v1.10.6 (Sprint 10.1.5)
 
