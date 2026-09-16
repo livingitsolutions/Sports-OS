@@ -56,3 +56,12 @@ One-hop progression follows this authority chain:
 Only rules originating from the supplied result's Contest are evaluated. Target lookup uses `plan_ref`, never names, sequence, query ordering, scores, or entrant identity. The captured CompetitionEntry is a historical snapshot; athlete, Team, roster, and current entry status are not re-evaluated or copied.
 
 Progression is non-recursive. A downstream Contest requires its own independently finalized result and later invocation. A terminal Final has no outgoing placements but is marked progressed with a zero count. This does not create a champion or standings.
+# Competition outcome boundary (Sprint 10.1.7)
+
+For a materialized Single Elimination format, authority flows through:
+
+`CompetitionFormat → frozen CompetitionFormatPlan → terminal PlannedContest → Contest.plan_ref → finalized ContestResult → ContestResultOutcome → ContestParticipant → CompetitionEntry → CompetitionOutcome → CompetitionPlacement`.
+
+The terminal contest is the sole planned contest with no outgoing result progression. Its result must already have a zero-participant terminal progression marker. The winner snapshot becomes position 1 and the loser snapshot becomes position 2; no other standings are inferred. `CompetitionOutcome` belongs to `CompetitionFormat`, and placements retain only `CompetitionEntry` identity plus their source result.
+
+Competition lifecycle ≠ Competition outcome. Competition outcome ≠ achievement, Sports Passport, reward, or ranking. Finalizing an outcome does not complete its Competition.

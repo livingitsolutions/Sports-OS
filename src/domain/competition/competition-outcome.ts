@@ -1,0 +1,7 @@
+import type {AggregateRoot,AggregateVersion} from "@domain/aggregate";
+import type {Id,ISODateString} from "@shared/kernel";
+
+export interface CompetitionOutcome extends AggregateRoot<"CompetitionOutcome">{readonly competitionFormatId:Id<"CompetitionFormat">;readonly status:"finalized";readonly finalizedAt:ISODateString;readonly createdAt:ISODateString;}
+export interface CompetitionPlacement extends AggregateRoot<"CompetitionPlacement">{readonly competitionOutcomeId:Id<"CompetitionOutcome">;readonly competitionEntryId:Id<"CompetitionEntry">;readonly position:number;readonly sourceContestResultId:Id<"ContestResult">;readonly createdAt:ISODateString;}
+export const finalizedCompetitionOutcome=(i:{id:Id<"CompetitionOutcome">;competitionFormatId:Id<"CompetitionFormat">;now:ISODateString;version?:AggregateVersion}):CompetitionOutcome=>({id:i.id,competitionFormatId:i.competitionFormatId,status:"finalized",finalizedAt:i.now,createdAt:i.now,version:i.version??1 as AggregateVersion});
+export const competitionPlacement=(i:{id:Id<"CompetitionPlacement">;competitionOutcomeId:Id<"CompetitionOutcome">;competitionEntryId:Id<"CompetitionEntry">;position:number;sourceContestResultId:Id<"ContestResult">;now:ISODateString;version?:AggregateVersion}):CompetitionPlacement=>({id:i.id,competitionOutcomeId:i.competitionOutcomeId,competitionEntryId:i.competitionEntryId,position:i.position,sourceContestResultId:i.sourceContestResultId,createdAt:i.now,version:i.version??1 as AggregateVersion});
