@@ -31,6 +31,7 @@ export type { CompetitionStructureMaterializer,CompetitionStructureMaterializati
 export type { CompetitionSeedAssignmentRepository,CompetitionSeedAssignmentLookup,CompetitionSeedAssignmentPersistenceError } from "@app/contracts/competition-seed-assignment-repository";
 export type { CompetitionSeedFinalizer,CompetitionSeedFinalizationError } from "@app/contracts/competition-seed-finalizer";
 export type { ContestParticipantRepository,ContestParticipantLookup,ContestParticipantPersistenceError } from "@app/contracts/contest-participant-repository";
+export type { ContestResultRepository,ContestResultRecorder,ContestResultLookup,ContestResultRecordingError } from "@app/contracts/contest-result-repository";
 export type { InitialContestParticipantMaterializer,InitialParticipantPlacement,InitialParticipantMaterializationError } from "@app/contracts/initial-contest-participant-materializer";
 export type { OrganizationRepository, OrganizationLookupResult, OrganizationPersistenceError } from "@app/contracts/organization-repository";
 export type { OrganizationMembershipRepository, OrganizationMembershipLookupResult, OrganizationMembershipPersistenceError } from "@app/contracts/organization-membership-repository";
