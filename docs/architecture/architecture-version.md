@@ -4,12 +4,16 @@
 
 ## Current version
 
-**SportsOS Architecture v1.10.5 — Sprint 10.1.4 (Initial Contest Participation)**
+**SportsOS Architecture v1.10.6 — Sprint 10.1.5 (Contest Result Foundation)**
 
-- Date: 2026-09-12
-- Sprint: 10.1.4 (initial Contest participation)
+- Date: 2026-09-16
+- Sprint: 10.1.5 (Contest result foundation)
 - Status: Active
-- Supersedes: v1.10.4 (Sprint 10.1.3)
+- Supersedes: v1.10.5 (Sprint 10.1.4)
+
+## What changed in v1.10.6 (Sprint 10.1.5)
+
+Completed two-participant Contests can now receive one explicit, immutable, finalized sport-neutral result with separate winner and loser outcomes. Contest completion remains independent from authoritative result finalization. The result stores ContestParticipant identity, atomically serializes conflicting recordings, and deliberately performs no progression or downstream participant creation. Sport-specific performance details remain deferred.
 
 ## What changed in v1.10.5 (Sprint 10.1.4)
 
