@@ -11,7 +11,7 @@ ALTER TABLE public.contest_participants
   );
 CREATE TABLE public.contest_result_progressions (
   contest_result_id uuid PRIMARY KEY REFERENCES public.contest_results(id),
-  competition_format_id uuid NOT NULL REFERENCES public.competition_formats(id),
+  competition_format_id text NOT NULL REFERENCES public.competition_formats(id),
   progressed_at timestamptz NOT NULL,
   participant_count integer NOT NULL CHECK (participant_count >= 0)
 );
