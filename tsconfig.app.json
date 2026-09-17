@@ -30,5 +30,5 @@
       "@shared/*": ["src/shared/*"]
     }
   },
-  "include": ["src", "netlify/functions"]
+  "include": ["src", "netlify/functions", "scripts/initialize-controlled-pilot.ts"]
 }
