@@ -1,4 +1,4 @@
-/* global URL */
+/* global URL, FormData, HTMLFormElement, HTMLInputElement */
 import { useEffect, useState } from "react";
 import type React from "react";
 import type { OrganizerOrganizationContext } from "./app/use-cases/get-organizer-context";
@@ -14,6 +14,8 @@ import {
   retryOrganizerProgression,
   finalizeOrganizerOutcome,
   loadOrganizerWorkspace,
+  signInOrganizer,
+  signOutOrganizer,
   type OrganizerLoadResult,
 } from "./presentation/client";
 const nav = [
@@ -69,11 +71,13 @@ export function AppShell({
   organizations = [],
   selectedOrganizationId,
   onOrganizationChange,
+  onSignOut,
 }: {
   children: React.ReactNode;
   organizations?: readonly OrganizerOrganizationContext[];
   selectedOrganizationId?: string;
   onOrganizationChange?: (id: string) => void;
+  onSignOut?: () => void;
 }) {
   const name =
     organizations.find((item) => item.organizationId === selectedOrganizationId)
@@ -119,6 +123,7 @@ export function AppShell({
             <b>Organizer</b>
             <small>Operations access</small>
           </div>
+          {onSignOut && <button className="sign-out" onClick={onSignOut}>Sign out</button>}
         </footer>
       </aside>
       <main className="main">
@@ -158,6 +163,51 @@ export function AppShell({
     </div>
   );
 }
+export function OrganizerSignIn({
+  onAuthenticated,
+}: {
+  onAuthenticated: () => void | Promise<void>;
+}) {
+  const [submitting, setSubmitting] = useState(false),
+    [error, setError] = useState<string>();
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setError(undefined);
+    const formElement = event.currentTarget,
+      form = new FormData(formElement),
+      email = String(form.get("email") ?? ""),
+      password = String(form.get("password") ?? "");
+    const passwordInput = formElement.elements.namedItem("password");
+    if (passwordInput instanceof HTMLInputElement) passwordInput.value = "";
+    const result = await signInOrganizer(email, password);
+    if (result.kind === "authenticated") await onAuthenticated();
+    else {
+      setError(
+        result.kind === "invalid_credentials"
+          ? "The email or password is incorrect."
+          : "Sign in is unavailable right now. Check your connection and try again.",
+      );
+    }
+    setSubmitting(false);
+  };
+  return (
+    <section className="sign-in-card" aria-labelledby="sign-in-title">
+      <p className="eyebrow">Organizer access</p>
+      <h2 id="sign-in-title">Sign in required</h2>
+      <p>Use your SportsOS organizer account to continue.</p>
+      <form onSubmit={(event) => void submit(event)}>
+        <label htmlFor="organizer-email">Email</label>
+        <input id="organizer-email" name="email" type="email" autoComplete="email" required disabled={submitting} />
+        <label htmlFor="organizer-password">Password</label>
+        <input id="organizer-password" name="password" type="password" autoComplete="current-password" required disabled={submitting} />
+        {error && <p className="sign-in-error" role="alert">{error}</p>}
+        <button type="submit" disabled={submitting}>{submitting ? "Signing in…" : "Sign in"}</button>
+      </form>
+    </section>
+  );
+}
 const contextOf = (state: OrganizerLoadResult) =>
   "context" in state ? state.context : undefined;
 const selectedOf = (state: OrganizerLoadResult) =>
@@ -186,6 +236,10 @@ export default function App() {
       organizations={context?.organizations}
       selectedOrganizationId={selected?.organizationId}
       onOrganizationChange={changeOrganization}
+      onSignOut={context ? () => {
+        setState({ kind: "unauthenticated" });
+        void signOutOrganizer();
+      } : undefined}
     >
       <div className="page" id="workspace">
         <header className="page-intro">
@@ -229,9 +283,10 @@ export default function App() {
             operations workspace.
           </EmptyState>
         ) : state.kind === "unauthenticated" ? (
-          <MessageState kind="forbidden" title="Sign in required">
-            Sign in with your SportsOS account to open the organizer workspace.
-          </MessageState>
+          <OrganizerSignIn onAuthenticated={async () => {
+            setState(undefined);
+            setState(await loadOrganizerWorkspace());
+          }} />
         ) : state.kind === "no_memberships" ? (
           <EmptyState title="No organizer organizations">
             Your account has no active organization memberships.

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   OrganizerContext,
   OrganizerOrganizationContext,
@@ -25,21 +26,71 @@ export type OrganizerLoadResult =
       selected: OrganizerOrganizationContext;
     }
   | { kind: "error" };
+
+let browserClient: SupabaseClient | undefined;
+
+function getBrowserSupabaseClient(): SupabaseClient | undefined {
+  if (browserClient) return browserClient;
+  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined,
+    key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+  if (!url?.trim() || !key?.trim()) return undefined;
+  browserClient = createClient(url, key, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
+  return browserClient;
+}
+
+export type OrganizerAuthenticationResult =
+  | { kind: "authenticated" }
+  | { kind: "invalid_credentials" }
+  | { kind: "unavailable" };
+
+export async function signInOrganizer(
+  email: string,
+  password: string,
+): Promise<OrganizerAuthenticationResult> {
+  const supabase = getBrowserSupabaseClient();
+  if (!supabase) return { kind: "unavailable" };
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) return { kind: "authenticated" };
+    return {
+      kind:
+        error.status === 400 || error.status === 401
+          ? "invalid_credentials"
+          : "unavailable",
+    };
+  } catch {
+    return { kind: "unavailable" };
+  }
+}
+
+export async function signOutOrganizer(): Promise<void> {
+  const supabase = getBrowserSupabaseClient();
+  if (!supabase) return;
+  try {
+    await supabase.auth.signOut();
+  } catch {
+    // The local organizer UI is still cleared by the caller.
+  }
+}
+
 export async function loadOrganizerWorkspace(
   organizationOverride?: string,
 ): Promise<OrganizerLoadResult> {
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined,
-    key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-  if (!url?.trim() || !key?.trim()) return { kind: "error" };
-  const supabase = createClient(url, key, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    }),
-    session = await supabase.auth.getSession(),
+  const supabase = getBrowserSupabaseClient();
+  if (!supabase) return { kind: "error" };
+  let token: string | undefined;
+  try {
+    const session = await supabase.auth.getSession();
     token = session.data.session?.access_token;
+  } catch {
+    return { kind: "error" };
+  }
   if (!token) return { kind: "unauthenticated" };
   const headers = { Authorization: `Bearer ${token}` };
   try {
@@ -98,16 +149,9 @@ export async function finalizeOrganizerMatch(input: {
   contestId: string;
   winnerContestParticipantId: string;
 }): Promise<FinalizeMatchClientResult> {
-  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined,
-    key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
-  if (!url?.trim() || !key?.trim()) return { kind: "unavailable" };
-  const session = await createClient(url, key, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    }).auth.getSession(),
+  const supabase = getBrowserSupabaseClient();
+  if (!supabase) return { kind: "unavailable" };
+  const session = await supabase.auth.getSession(),
     token = session.data.session?.access_token;
   if (!token) return { kind: "unauthenticated" };
   try {
@@ -152,8 +196,8 @@ export async function finalizeOrganizerMatch(input: {
 
 export type OrganizerCommandResult={kind:"completed"|"unauthenticated"|"forbidden"|"conflict"|"invalid"|"unavailable"};
 async function organizerCommand(path:string,input:Record<string,string>):Promise<OrganizerCommandResult>{
- const url=import.meta.env.VITE_SUPABASE_URL as string|undefined,key=import.meta.env.VITE_SUPABASE_ANON_KEY as string|undefined;if(!url?.trim()||!key?.trim())return{kind:"unavailable"};
- const session=await createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}).auth.getSession(),token=session.data.session?.access_token;if(!token)return{kind:"unauthenticated"};
+ const supabase=getBrowserSupabaseClient();if(!supabase)return{kind:"unavailable"};
+ const session=await supabase.auth.getSession(),token=session.data.session?.access_token;if(!token)return{kind:"unauthenticated"};
  try{const response=await window.fetch(path,{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(input)});return{kind:response.ok?"completed":response.status===401?"unauthenticated":response.status===403?"forbidden":response.status===409?"conflict":response.status===400||response.status===422?"invalid":"unavailable"};}catch{return{kind:"unavailable"};}
 }
 export const retryOrganizerProgression=(input:{organizationId:string;contestResultId:string})=>organizerCommand("/.netlify/functions/retry-organizer-progression",input);
