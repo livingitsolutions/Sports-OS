@@ -14,6 +14,7 @@
     "test:unit": "vitest run --exclude 'tests/integration/**'",
     "test:integration": "node scripts/require-test-database.cjs && vitest run tests/integration",
     "test:watch": "vitest",
+    "check:function-artifacts": "node scripts/check-function-artifacts.cjs",
     "preview": "vite preview"
   },
   "dependencies": {
