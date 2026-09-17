@@ -10,6 +10,7 @@ import {
   MessageState,
   TournamentWorkspace,
   contestOperationState,
+  isContestActionable,
   phasePresentation,
   shortEntry,
 } from "../../src/presentation/tournament";
@@ -213,25 +214,34 @@ describe("organizer interface", () => {
 });
 
 describe("match operations presentation authority", () => {
-  it("renders only authoritative completed two-participant contests as actionable", () => {
+  const readyParticipants = [
+    {
+      contestParticipantId: "p1",
+      position: 1,
+      competitionEntryId: "entry-1111",
+      sourceType: "seed" as const,
+      sourceSeedNumber: 1,
+    },
+    {
+      contestParticipantId: "p2",
+      position: 2,
+      competitionEntryId: "entry-2222",
+      sourceType: "seed" as const,
+      sourceSeedNumber: 2,
+    },
+  ];
+  const readyContest = {
+    ...view.contests[0]!,
+    status: "pending" as const,
+    participants: readyParticipants,
+    progressionState: "awaiting_result" as const,
+    result: undefined,
+  };
+
+  it("renders a pending two-participant contest awaiting a result as actionable", () => {
     const contest = {
       ...view.contests[0]!,
-      participants: [
-        {
-          contestParticipantId: "p1",
-          position: 1,
-          competitionEntryId: "entry-1111",
-          sourceType: "seed" as const,
-          sourceSeedNumber: 1,
-        },
-        {
-          contestParticipantId: "p2",
-          position: 2,
-          competitionEntryId: "entry-2222",
-          sourceType: "seed" as const,
-          sourceSeedNumber: 2,
-        },
-      ],
+      ...readyContest,
     };
     const actionable = {
       ...view,
@@ -249,20 +259,38 @@ describe("match operations presentation authority", () => {
     expect(output).toContain("Enter result");
     expect(output).not.toContain("Finalize match result");
   });
-  it("distinguishes non-actionable and progressed lifecycle states without deriving progression", () => {
-    expect(contestOperationState(view.contests[0]!)).toBe(
+
+  it("uses authoritative progression state for actionability", () => {
+    expect(isContestActionable(readyContest)).toBe(true);
+    expect(
+      isContestActionable({ ...readyContest, participants: [readyParticipants[0]!] }),
+    ).toBe(false);
+    expect(
+      isContestActionable({ ...readyContest, result: view.contests[1]!.result }),
+    ).toBe(false);
+    expect(
+      isContestActionable({ ...readyContest, progressionState: "awaiting_progression" }),
+    ).toBe(false);
+    expect(
+      isContestActionable({ ...readyContest, progressionState: "terminal_progressed" }),
+    ).toBe(false);
+    expect(
+      isContestActionable({ ...readyContest, status: "cancelled" }),
+    ).toBe(false);
+  });
+
+  it("presents non-actionable lifecycle states", () => {
+    expect(contestOperationState({ ...readyContest, participants: [] })).toBe(
       "Awaiting participants",
     );
-    expect(contestOperationState(view.contests[1]!)).toBe(
-      "Terminal progressed",
-    );
     expect(
-      contestOperationState({
-        ...view.contests[0]!,
-        status: "pending",
-        participants: [...view.contests[1]!.participants],
-        result: undefined,
-      }),
-    ).toBe("Awaiting result");
+      contestOperationState({ ...readyContest, progressionState: "awaiting_progression" }),
+    ).toBe("Awaiting progression");
+    expect(
+      contestOperationState({ ...readyContest, progressionState: "terminal_progressed" }),
+    ).toBe("Terminal progressed");
+    expect(contestOperationState({ ...readyContest, status: "cancelled" })).toBe(
+      "Not applicable",
+    );
   });
 });
