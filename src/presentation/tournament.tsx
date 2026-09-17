@@ -376,8 +376,23 @@ export function contestOperationState(
         : "Progressed";
   if (c.status === "cancelled") return "Not applicable";
   if (c.participants.length !== 2) return "Awaiting participants";
-  if (c.status !== "completed") return "Awaiting result";
-  return "Action required";
+  if (c.progressionState === "awaiting_result") return "Action required";
+  if (c.progressionState === "awaiting_progression")
+    return "Awaiting progression";
+  if (c.progressionState === "terminal_progressed")
+    return "Terminal progressed";
+  if (c.progressionState === "progressed") return "Progressed";
+  return "Not applicable";
+}
+export function isContestActionable(
+  c: TournamentOperationsView["contests"][number],
+) {
+  return (
+    !c.result &&
+    c.status !== "cancelled" &&
+    c.participants.length === 2 &&
+    c.progressionState === "awaiting_result"
+  );
 }
 function Matches({
   view,
@@ -400,8 +415,6 @@ function Matches({
   const [retrying,setRetrying]=useState<string>();
   const closeButton=useRef<React.ElementRef<"button">>(null);
   useEffect(()=>{if(open)closeButton.current?.focus();},[open]);
-  const actionable = (c: TournamentOperationsView["contests"][number]) =>
-    !c.result && c.status === "completed" && c.participants.length === 2;
   const submit = async () => {
     if (!open || !winner || !confirm || !onFinalize) return;
     setPending(true);
@@ -423,7 +436,7 @@ function Matches({
         {view.contests.map((c) => (
           <article
             key={c.contestId}
-            className={actionable(c) ? "is-actionable" : ""}
+            className={isContestActionable(c) ? "is-actionable" : ""}
           >
             <div>
               <b>Match {c.sequence}</b>
@@ -436,7 +449,7 @@ function Matches({
               {c.participants.map(participantLabel).join(" · ") ||
                 "No participants assigned"}
             </span>
-            {actionable(c) ? (
+            {isContestActionable(c) ? (
               <button
                 className="operate-button"
                 onClick={() => {
