@@ -233,6 +233,7 @@ export function TournamentWorkspace({
   onFinalize,
   onRetryProgression,
   onFinalizeOutcome,
+  onContestLifecycle,
 }: {
   view: TournamentOperationsView;
   tab: WorkspaceTab;
@@ -243,6 +244,7 @@ export function TournamentWorkspace({
   ) => Promise<FinalizeMatchClientResult>;
   onRetryProgression?: (contestResultId: string) => Promise<OrganizerCommandResult>;
   onFinalizeOutcome?: () => Promise<OrganizerCommandResult>;
+  onContestLifecycle?: (contestId:string,operation:"schedule"|"start"|"complete",scheduledAt?:string)=>Promise<OrganizerCommandResult>;
 }) {
   const phase = phasePresentation[view.phase];
   const tabs: WorkspaceTab[] = [
@@ -282,7 +284,7 @@ export function TournamentWorkspace({
       {tab === "overview" && <Overview view={view} onFinalizeOutcome={onFinalizeOutcome} />}{" "}
       {tab === "seeding" && <Seeding view={view} />}{" "}
       {tab === "bracket" && <Bracket view={view} />}{" "}
-      {tab === "matches" && <Matches view={view} onFinalize={onFinalize} onRetryProgression={onRetryProgression} />}{" "}
+      {tab === "matches" && <Matches view={view} onFinalize={onFinalize} onRetryProgression={onRetryProgression} onContestLifecycle={onContestLifecycle} />}{" "}
       {tab === "results" && <Results view={view} />}
     </div>
   );
@@ -376,12 +378,15 @@ export function contestOperationState(
         : "Progressed";
   if (c.status === "cancelled") return "Not applicable";
   if (c.participants.length !== 2) return "Awaiting participants";
-  if (c.progressionState === "awaiting_result") return "Action required";
   if (c.progressionState === "awaiting_progression")
     return "Awaiting progression";
   if (c.progressionState === "terminal_progressed")
     return "Terminal progressed";
   if (c.progressionState === "progressed") return "Progressed";
+  if (c.status === "pending") return "Ready to schedule";
+  if (c.status === "scheduled") return "Ready to start";
+  if (c.status === "in_progress") return "Ready to complete";
+  if (c.status === "completed" && c.progressionState === "awaiting_result") return "Action required";
   return "Not applicable";
 }
 export function isContestActionable(
@@ -389,15 +394,20 @@ export function isContestActionable(
 ) {
   return (
     !c.result &&
-    c.status !== "cancelled" &&
+    c.status === "completed" &&
     c.participants.length === 2 &&
     c.progressionState === "awaiting_result"
   );
+}
+export function contestLifecycleOperation(c:TournamentOperationsView["contests"][number]):"schedule"|"start"|"complete"|undefined{
+  if(c.result||c.participants.length!==2||c.progressionState!=="awaiting_result")return undefined;
+  return c.status==="pending"?"schedule":c.status==="scheduled"?"start":c.status==="in_progress"?"complete":undefined;
 }
 function Matches({
   view,
   onFinalize,
   onRetryProgression,
+  onContestLifecycle,
 }: {
   view: TournamentOperationsView;
   onFinalize?: (
@@ -405,6 +415,7 @@ function Matches({
     winnerContestParticipantId: string,
   ) => Promise<FinalizeMatchClientResult>;
   onRetryProgression?: (contestResultId: string) => Promise<OrganizerCommandResult>;
+  onContestLifecycle?: (contestId:string,operation:"schedule"|"start"|"complete",scheduledAt?:string)=>Promise<OrganizerCommandResult>;
 }) {
   const [open, setOpen] =
       useState<TournamentOperationsView["contests"][number]>(),
@@ -413,6 +424,7 @@ function Matches({
     [pending, setPending] = useState(false),
     [feedback, setFeedback] = useState<FinalizeMatchClientResult>();
   const [retrying,setRetrying]=useState<string>();
+  const [lifecyclePending,setLifecyclePending]=useState<string>(),[scheduleValues,setScheduleValues]=useState<Record<string,string>>({}),[lifecycleFeedback,setLifecycleFeedback]=useState<Record<string,OrganizerCommandResult>>({});
   const closeButton=useRef<React.ElementRef<"button">>(null);
   useEffect(()=>{if(open)closeButton.current?.focus();},[open]);
   const submit = async () => {
@@ -433,7 +445,10 @@ function Matches({
         <span>{view.contests.length} total</span>
       </header>
       <div className="match-list">
-        {view.contests.map((c) => (
+        {view.contests.map((c) => {
+          const lifecycle=contestLifecycleOperation(c);
+          const runLifecycle=async()=>{if(!lifecycle||!onContestLifecycle)return;let scheduledAt:string|undefined;if(lifecycle==="schedule"){const local=scheduleValues[c.contestId];if(!local)return;scheduledAt=new Date(local).toISOString();}setLifecyclePending(c.contestId);const result=await onContestLifecycle(c.contestId,lifecycle,scheduledAt);setLifecycleFeedback(current=>({...current,[c.contestId]:result}));setLifecyclePending(undefined);};
+          return (
           <article
             key={c.contestId}
             className={isContestActionable(c) ? "is-actionable" : ""}
@@ -449,7 +464,7 @@ function Matches({
               {c.participants.map(participantLabel).join(" · ") ||
                 "No participants assigned"}
             </span>
-            {isContestActionable(c) ? (
+            {lifecycle === "schedule" ? <div className="schedule-control"><label>Scheduled time <input type="datetime-local" value={scheduleValues[c.contestId]??""} disabled={lifecyclePending===c.contestId} onChange={event=>setScheduleValues(current=>({...current,[c.contestId]:event.target.value}))}/><small>Uses your device timezone; stored as an exact UTC instant.</small></label><button className="operate-button" disabled={!scheduleValues[c.contestId]||lifecyclePending===c.contestId||!onContestLifecycle} onClick={()=>void runLifecycle()}>{lifecyclePending===c.contestId?"Scheduling…":"Schedule"}</button></div> : lifecycle ? <button className="operate-button" disabled={lifecyclePending===c.contestId||!onContestLifecycle} onClick={()=>void runLifecycle()}>{lifecyclePending===c.contestId?"Updating…":lifecycle==="start"?"Start match":"Complete match"}</button> : isContestActionable(c) ? (
               <button
                 className="operate-button"
                 onClick={() => {
@@ -466,8 +481,9 @@ function Matches({
             ) : (
               <small className="mini-status">{contestOperationState(c)}</small>
             )}
+            {lifecycleFeedback[c.contestId]&&lifecycleFeedback[c.contestId]!.kind!=="completed"&&<small className="operation-feedback error" role="alert">The lifecycle operation could not be completed. The match has refreshed.</small>}
           </article>
-        ))}
+        )})}
       </div>
       {open && (
         <div className="operation-backdrop">

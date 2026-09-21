@@ -11,6 +11,7 @@ import {
   TournamentWorkspace,
   contestOperationState,
   isContestActionable,
+  contestLifecycleOperation,
   phasePresentation,
   shortEntry,
 } from "../../src/presentation/tournament";
@@ -238,7 +239,7 @@ describe("match operations presentation authority", () => {
     result: undefined,
   };
 
-  it("renders a pending two-participant contest awaiting a result as actionable", () => {
+  it("renders a pending two-participant contest as schedulable, not result actionable", () => {
     const contest = {
       ...view.contests[0]!,
       ...readyContest,
@@ -256,12 +257,19 @@ describe("match operations presentation authority", () => {
         onFinalize: async () => ({ kind: "progressed" }),
       }),
     );
-    expect(output).toContain("Enter result");
+    expect(output).toContain("Schedule");
+    expect(output).not.toContain("Enter result");
     expect(output).not.toContain("Finalize match result");
   });
 
   it("uses authoritative progression state for actionability", () => {
-    expect(isContestActionable(readyContest)).toBe(true);
+    expect(isContestActionable(readyContest)).toBe(false);
+    expect(contestLifecycleOperation(readyContest)).toBe("schedule");
+    expect(contestLifecycleOperation({...readyContest,status:"scheduled"})).toBe("start");
+    expect(contestLifecycleOperation({...readyContest,status:"in_progress"})).toBe("complete");
+    expect(contestLifecycleOperation({...readyContest,progressionState:"progressed"})).toBeUndefined();
+    expect(contestLifecycleOperation({...readyContest,progressionState:"terminal_progressed"})).toBeUndefined();
+    expect(isContestActionable({...readyContest,status:"completed"})).toBe(true);
     expect(
       isContestActionable({ ...readyContest, participants: [readyParticipants[0]!] }),
     ).toBe(false);

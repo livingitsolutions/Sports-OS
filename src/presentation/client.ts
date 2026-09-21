@@ -202,3 +202,4 @@ async function organizerCommand(path:string,input:Record<string,string>):Promise
 }
 export const retryOrganizerProgression=(input:{organizationId:string;contestResultId:string})=>organizerCommand("/.netlify/functions/retry-organizer-progression",input);
 export const finalizeOrganizerOutcome=(input:{organizationId:string;competitionFormatId:string})=>organizerCommand("/.netlify/functions/finalize-organizer-outcome",input);
+export const manageOrganizerContestLifecycle=(input:{organizationId:string;contestId:string;operation:"schedule"|"start"|"complete";scheduledAt?:string})=>organizerCommand("/.netlify/functions/organizer-contest-lifecycle",Object.fromEntries(Object.entries(input).filter(([,value])=>value!==undefined)) as Record<string,string>);
