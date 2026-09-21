@@ -40,12 +40,15 @@ import { SystemClock } from "@adapters/clock/system-clock";
 import { UuidIdGenerator } from "@adapters/id/uuid-id-generator";
 import { NoopEventPublisher } from "@adapters/events/noop-event-publisher";
 import { createCompetitionFormatEngineRegistry } from "@composition/competition-format-engines";
+import { ScheduleContest, StartContest, CompleteContest } from "@app/use-cases/manage-competition-lifecycle";
+import { ManageOrganizerContestLifecycle } from "@app/use-cases/manage-organizer-contest-lifecycle";
 export interface OrganizerRequestRuntime {
   readonly organizerContext: GetOrganizerContext;
   readonly tournamentOperations: GetAuthenticatedTournamentOperationsView;
   readonly finalizeMatch: FinalizeOrganizerMatchResult;
   readonly retryProgression: RetryOrganizerMatchProgression;
   readonly finalizeOutcome: FinalizeOrganizerCompetitionOutcome;
+  readonly contestLifecycle: ManageOrganizerContestLifecycle;
   close(): Promise<void>;
 }
 export function createOrganizerRequestRuntime(
@@ -127,6 +130,7 @@ export function createOrganizerRequestRuntime(
     domainEvents,
   });
   const finalizeOutcomeAuthority=new FinalizeCompetitionOutcome({formatRepository:new PgCompetitionFormatRepository(sql),competitionRepository,eventRepository,divisionRepository:new PgDivisionRepository(sql),structure:new PgCompetitionStructureMaterializer(sql),finalizer:new PgCompetitionOutcomeFinalizer(sql),engines:createCompetitionFormatEngineRegistry(),authorization,clock,idGenerator,domainEvents});
+  const lifecycleDeps={contestRepository,stageRepository,competitionRepository,eventRepository,authorization,clock,idGenerator,domainEvents};
   return {
     organizerContext,
     tournamentOperations: new GetAuthenticatedTournamentOperationsView({
@@ -141,6 +145,7 @@ export function createOrganizerRequestRuntime(
     }),
     retryProgression:new RetryOrganizerMatchProgression({organizerContext,progress}),
     finalizeOutcome:new FinalizeOrganizerCompetitionOutcome({organizerContext,finalizeOutcome:finalizeOutcomeAuthority}),
+    contestLifecycle:new ManageOrganizerContestLifecycle({organizerContext,contests:contestRepository,schedule:new ScheduleContest(lifecycleDeps),start:new StartContest(lifecycleDeps),complete:new CompleteContest(lifecycleDeps)}),
     close: () => sql.end({ timeout: 5 }),
   };
 }

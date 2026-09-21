@@ -13,6 +13,7 @@ import {
   finalizeOrganizerMatch,
   retryOrganizerProgression,
   finalizeOrganizerOutcome,
+  manageOrganizerContestLifecycle,
   loadOrganizerWorkspace,
   signInOrganizer,
   signOutOrganizer,
@@ -274,6 +275,7 @@ export default function App() {
             }}
             onRetryProgression={async contestResultId=>{const result=await retryOrganizerProgression({organizationId:workspace.selected.organizationId,contestResultId});setState(await loadOrganizerWorkspace(workspace.selected.organizationId));return result;}}
             onFinalizeOutcome={async()=>{const result=await finalizeOrganizerOutcome({organizationId:workspace.selected.organizationId,competitionFormatId:workspace.view.competitionFormatId});setState(await loadOrganizerWorkspace(workspace.selected.organizationId));return result;}}
+            onContestLifecycle={async(contestId,operation,scheduledAt)=>{const result=await manageOrganizerContestLifecycle({organizationId:workspace.selected.organizationId,contestId,operation,scheduledAt});setState(await loadOrganizerWorkspace(workspace.selected.organizationId));return result;}}
           />
         ) : !state ? (
           <LoadingState />
