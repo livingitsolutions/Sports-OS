@@ -6,7 +6,7 @@ import type {AuthorizeOrganizationPermission} from "../../src/app/use-cases/auth
 import {createTestContainer} from "../../src/composition/test";
 
 const contest=(progressionState:TournamentContestView["progressionState"],participants=0):TournamentContestView=>({contestId:"contest-1",planRef:"r1-m1",stageId:"stage-1",sequence:1,status:"pending",capacity:2,participants:Array.from({length:participants},(_,i)=>({contestParticipantId:`p${i}`,position:i+1,competitionEntryId:`entry-${i}`,sourceType:"seed",sourceSeedNumber:i+1})),progressionState});
-const snapshot=(change:Partial<TournamentOperationsSnapshot>={}):TournamentOperationsSnapshot=>({competitionFormatId:"format-1",competitionId:"competition-1",eventId:"event-1",organizationId:"org-1",sportId:"sport-1",formatKind:"single_elimination",competitionStatus:"active",formatStatus:"active",seeding:{finalized:false,assignedCount:0,assignments:[]},stages:[],contests:[],...change});
+const snapshot=(change:Partial<TournamentOperationsSnapshot>={}):TournamentOperationsSnapshot=>({competitionFormatId:"format-1",competitionId:"competition-1",eventId:"event-1",organizationId:"org-1",sportId:"sport-1",formatKind:"single_elimination",competitionStatus:"active",formatStatus:"active",entrants:[],seeding:{finalized:false,assignedCount:0,assignments:[]},stages:[],contests:[],...change});
 const auth=(allowed:boolean)=>({execute:async()=>({ok:true as const,value:{allowed}})}) as unknown as AuthorizeOrganizationPermission;
 
 describe("Tournament Operations application view",()=>{
@@ -34,5 +34,9 @@ describe("Tournament Operations application view",()=>{
  it("preserves deterministic structural ordering and byes",()=>{
   const assignments=[{seedNumber:1,competitionEntryId:"e1"},{seedNumber:2,competitionEntryId:"e2"}];const bye=contest("awaiting_result",1);const value=snapshot({seeding:{frozenEntrantCount:6,finalized:false,assignedCount:2,assignments},stages:[{stageId:"stage-1",sequence:1,status:"pending",contests:[bye]}],contests:[bye]});
   expect(value.seeding.assignments.map(a=>a.seedNumber)).toEqual([1,2]);expect(value.contests[0]?.planRef).toBe("r1-m1");expect(value.contests[0]?.participants).toHaveLength(1);expect(value.contests[0]?.capacity).toBe(2);
+ });
+ it("preserves entrant identity descriptors through the in-memory reader",async()=>{
+  const value=snapshot({entrants:[{competitionEntryId:"entry-team",entrantType:"team",identityStatus:"resolved",displayName:"Harbor Lions"},{competitionEntryId:"entry-missing",entrantType:"unknown",identityStatus:"unavailable"}]});
+  const reader=new InMemoryTournamentOperationsReader([value]);const result=await reader.read("format-1");expect(result).toMatchObject({kind:"found",snapshot:{entrants:value.entrants}});
  });
 });

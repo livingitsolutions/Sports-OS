@@ -15,6 +15,7 @@ vi.mock("@supabase/supabase-js", () => ({
 
 import { OrganizerSignIn } from "../../src/App";
 import {
+  finalizeOrganizerMatch,
   loadOrganizerWorkspace,
   signInOrganizer,
   signOutOrganizer,
@@ -123,5 +124,23 @@ describe("organizer browser authentication", () => {
     expect(window.location.search).toBe(
       "?organizationId=org-1&competitionFormatId=format-1",
     );
+  });
+
+  it("submits the authoritative ContestParticipant ID for a result command", async () => {
+    auth.getSession.mockResolvedValue({ data: { session: { access_token: "browser-access-token" } } });
+    vi.mocked(window.fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ progression: "progressed" }), { status: 200 }),
+    );
+    await finalizeOrganizerMatch({
+      organizationId: "org-1",
+      contestId: "contest-1",
+      winnerContestParticipantId: "participant-authoritative-1",
+    });
+    const request = vi.mocked(window.fetch).mock.calls[0]![1]!;
+    expect(JSON.parse(String(request.body))).toEqual({
+      organizationId: "org-1",
+      contestId: "contest-1",
+      winnerContestParticipantId: "participant-authoritative-1",
+    });
   });
 });
