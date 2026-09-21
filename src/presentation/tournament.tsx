@@ -52,10 +52,18 @@ export function shortEntry(id: string) {
   const clean = id.replace(/-/g, "");
   return `Entry •••${clean.slice(-4).toUpperCase()}`;
 }
-const participantLabel = (p: TournamentParticipantView) =>
-  p.sourceSeedNumber
-    ? `Seed ${p.sourceSeedNumber}`
-    : shortEntry(p.competitionEntryId);
+export const entrantLabel = (view: TournamentOperationsView, competitionEntryId: string) => {
+  const identity = view.entrants.find(
+    (entrant) => entrant.competitionEntryId === competitionEntryId,
+  );
+  return identity?.identityStatus === "resolved"
+    ? identity.displayName
+    : "Participant unavailable";
+};
+const participantLabel = (
+  view: TournamentOperationsView,
+  participant: TournamentParticipantView,
+) => entrantLabel(view, participant.competitionEntryId);
 export function StatusBadge({ phase }: { phase: TournamentOperationsPhase }) {
   const p = phasePresentation[phase];
   return (
@@ -121,9 +129,11 @@ export function MessageState({
   );
 }
 function EntryLine({
+  view,
   participant,
   result,
 }: {
+  view: TournamentOperationsView;
   participant?: TournamentParticipantView;
   result?: TournamentOperationsView["contests"][number]["result"];
 }) {
@@ -142,10 +152,10 @@ function EntryLine({
     <div
       className={`entry-line ${won ? "is-winner" : ""} ${lost ? "is-loser" : ""}`}
     >
-      <span>{participantLabel(participant)}</span>
+      <span>{participantLabel(view, participant)}</span>
       <small>
         {participant.sourceSeedNumber
-          ? shortEntry(participant.competitionEntryId)
+          ? `Seed ${participant.sourceSeedNumber}`
           : participant.sourceOutcome
             ? `Advances as ${participant.sourceOutcome}`
             : "Competition entry"}
@@ -197,12 +207,14 @@ export function Bracket({ view }: { view: TournamentOperationsView }) {
                     <span>{contest.result ? "Final" : "Pending"}</span>
                   </div>
                   <EntryLine
+                    view={view}
                     participant={contest.participants.find(
                       (p) => p.position === 1,
                     )}
                     result={contest.result}
                   />
                   <EntryLine
+                    view={view}
                     participant={contest.participants.find(
                       (p) => p.position === 2,
                     )}
@@ -328,7 +340,7 @@ function Overview({view,onFinalizeOutcome}:{view:TournamentOperationsView;onFina
         <h3>{next ? `Match ${next.sequence}` : "No pending matches"}</h3>
         <p>
           {next
-            ? `Stage ${view.stages.find((s) => s.stageId === next.stageId)?.sequence ?? "—"} · ${next.participants.length} entries assigned`
+            ? `Stage ${view.stages.find((s) => s.stageId === next.stageId)?.sequence ?? "—"} · ${next.participants.length ? next.participants.map((participant) => participantLabel(view, participant)).join(" vs ") : "Participants pending"}`
             : "All materialized matches have finalized results."}
         </p>
       </section>
@@ -353,8 +365,8 @@ function Seeding({ view }: { view: TournamentOperationsView }) {
               <li key={a.competitionEntryId}>
                 <b>{a.seedNumber}</b>
                 <span>
-                  Seed {a.seedNumber}
-                  <small>{shortEntry(a.competitionEntryId)}</small>
+                  {entrantLabel(view, a.competitionEntryId)}
+                  <small>Seed {a.seedNumber}</small>
                 </span>
               </li>
             ))}
@@ -402,6 +414,16 @@ export function isContestActionable(
 export function contestLifecycleOperation(c:TournamentOperationsView["contests"][number]):"schedule"|"start"|"complete"|undefined{
   if(c.result||c.participants.length!==2||c.progressionState!=="awaiting_result")return undefined;
   return c.status==="pending"?"schedule":c.status==="scheduled"?"start":c.status==="in_progress"?"complete":undefined;
+}
+export function ResultParticipantChoices({view,participants,winner,onWinner}:{view:TournamentOperationsView;participants:readonly TournamentParticipantView[];winner:string;onWinner:(contestParticipantId:string)=>void}) {
+  return <>
+    {participants.map((p) => (
+      <label className={winner === p.contestParticipantId ? "winner-choice selected" : "winner-choice"} key={p.contestParticipantId}>
+        <input type="radio" name="winner" checked={winner === p.contestParticipantId} onChange={() => onWinner(p.contestParticipantId)} />
+        <span><b>{participantLabel(view, p)}</b><small>Position {p.position}</small></span>
+      </label>
+    ))}
+  </>;
 }
 function Matches({
   view,
@@ -461,7 +483,7 @@ function Matches({
               </small>
             </div>
             <span>
-              {c.participants.map(participantLabel).join(" · ") ||
+              {c.participants.map((participant) => participantLabel(view, participant)).join(" · ") ||
                 "No participants assigned"}
             </span>
             {lifecycle === "schedule" ? <div className="schedule-control"><label>Scheduled time <input type="datetime-local" value={scheduleValues[c.contestId]??""} disabled={lifecyclePending===c.contestId} onChange={event=>setScheduleValues(current=>({...current,[c.contestId]:event.target.value}))}/><small>Uses your device timezone; stored as an exact UTC instant.</small></label><button className="operate-button" disabled={!scheduleValues[c.contestId]||lifecyclePending===c.contestId||!onContestLifecycle} onClick={()=>void runLifecycle()}>{lifecyclePending===c.contestId?"Scheduling…":"Schedule"}</button></div> : lifecycle ? <button className="operate-button" disabled={lifecyclePending===c.contestId||!onContestLifecycle} onClick={()=>void runLifecycle()}>{lifecyclePending===c.contestId?"Updating…":lifecycle==="start"?"Start match":"Complete match"}</button> : isContestActionable(c) ? (
@@ -521,29 +543,7 @@ function Matches({
             </p>
             <fieldset disabled={pending}>
               <legend>Match winner</legend>
-              {open.participants.map((p) => (
-                <label
-                  className={
-                    winner === p.contestParticipantId
-                      ? "winner-choice selected"
-                      : "winner-choice"
-                  }
-                  key={p.contestParticipantId}
-                >
-                  <input
-                    type="radio"
-                    name="winner"
-                    checked={winner === p.contestParticipantId}
-                    onChange={() => setWinner(p.contestParticipantId)}
-                  />
-                  <span>
-                    <b>{participantLabel(p)}</b>
-                    <small>
-                      {shortEntry(p.competitionEntryId)} · Position {p.position}
-                    </small>
-                  </span>
-                </label>
-              ))}
+              <ResultParticipantChoices view={view} participants={open.participants} winner={winner} onWinner={setWinner} />
             </fieldset>
             <label className="confirm-check">
               <input
@@ -615,8 +615,8 @@ function Results({ view }: { view: TournamentOperationsView }) {
             <li key={p.competitionEntryId}>
               <b>{String(p.position).padStart(2, "0")}</b>
               <span>
-                {p.position === 1 ? "Champion" : "Finalist · second place"}
-                <small>{shortEntry(p.competitionEntryId)}</small>
+                {entrantLabel(view, p.competitionEntryId)}
+                <small>{p.position === 1 ? "Champion" : "Finalist · second place"}</small>
               </span>
             </li>
           ))}

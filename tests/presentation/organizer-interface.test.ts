@@ -8,6 +8,7 @@ import {
   EmptyState,
   LoadingState,
   MessageState,
+  ResultParticipantChoices,
   TournamentWorkspace,
   contestOperationState,
   isContestActionable,
@@ -27,6 +28,11 @@ const view: TournamentOperationsView = {
   formatStatus: "active",
   phase: "completed",
   entrantCount: 3,
+  entrants: [
+    { competitionEntryId: "entry-1111", entrantType: "team", identityStatus: "resolved", displayName: "North Harbor" },
+    { competitionEntryId: "entry-2222", entrantType: "athlete", identityStatus: "resolved", displayName: "Alex Rivera" },
+    { competitionEntryId: "entry-3333", entrantType: "team", identityStatus: "unavailable" },
+  ],
   seeding: {
     frozenEntrantCount: 3,
     finalized: true,
@@ -144,7 +150,7 @@ describe("organizer interface", () => {
     ]);
     expect(phasePresentation.final_pending.label).toBe("Final pending");
   });
-  it("renders seeding and structural identities", () => {
+  it("renders human identity in seeding", () => {
     const output = html(
       React.createElement(TournamentWorkspace, {
         view,
@@ -153,13 +159,14 @@ describe("organizer interface", () => {
       }),
     );
     expect(output).toContain("Seed 1");
-    expect(output).toContain("Entry •••1111");
+    expect(output).toContain("North Harbor");
   });
-  it("renders bracket byes and finalized winners", () => {
+  it("renders bracket identity, byes, and finalized winners", () => {
     const output = html(React.createElement(Bracket, { view }));
     expect(output).toContain("Bye");
     expect(output).toContain("No entry assigned");
     expect(output).toContain("Winner");
+    expect(output).toContain("North Harbor");
     expect(output).toContain("terminal progressed");
   });
   it("renders completed placements", () => {
@@ -172,6 +179,31 @@ describe("organizer interface", () => {
     );
     expect(output).toContain("Champion");
     expect(output).toContain("Official placements");
+    expect(output).toContain("North Harbor");
+    expect(output).toContain("Alex Rivera");
+  });
+  it("renders a safe label when entrant identity is unavailable", () => {
+    const unavailable = {
+      ...view,
+      seeding: {
+        ...view.seeding,
+        assignments: [{ seedNumber: 3, competitionEntryId: "entry-3333" }],
+      },
+    };
+    const output = html(React.createElement(TournamentWorkspace, { view: unavailable, tab: "seeding", onTab: () => undefined }));
+    expect(output).toContain("Participant unavailable");
+    expect(output).not.toContain("Entry •••3333");
+  });
+  it("renders authoritative names in result confirmation choices", () => {
+    const output = html(React.createElement(ResultParticipantChoices, {
+      view,
+      participants: view.contests[1]!.participants,
+      winner: "",
+      onWinner: () => undefined,
+    }));
+    expect(output).toContain("North Harbor");
+    expect(output).toContain("Alex Rivera");
+    expect(output).not.toContain("Entry •••1111");
   });
   it("renders loading, empty, error, forbidden, and unsupported states", () => {
     expect(html(React.createElement(LoadingState))).toContain(
@@ -258,6 +290,8 @@ describe("match operations presentation authority", () => {
       }),
     );
     expect(output).toContain("Schedule");
+    expect(output).toContain("North Harbor");
+    expect(output).toContain("Alex Rivera");
     expect(output).not.toContain("Enter result");
     expect(output).not.toContain("Finalize match result");
   });
